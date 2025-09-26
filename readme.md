@@ -1,6 +1,6 @@
 # LoStack - Easy Docker Service Management
 
-An opinionated, highly integrated service for deploying, and managing Docker services. Automates the hard parts of deploying a multi-user environment with SSO, easy group-based access control, automatic service discovery, routing, and more.
+An opinionated, highly integrated container for deploying, and managing Docker services. Automates the hard parts of deploying a multi-user environment with SSO, easy group-based access control, automatic service discovery, routing, and more.
 
 
 ![LoStack Architecture](docs/images/architecture.png?raw=true "LoStack Architecture")
