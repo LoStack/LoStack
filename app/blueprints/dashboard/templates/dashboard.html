@@ -1,0 +1,118 @@
+{% extends "core.html" %}
+
+{% block title %}Dashboard {% endblock %}
+
+{% block page_title %}
+<i class="bi bi-house-door-fill me-2"></i>Dashboard
+{% endblock %}
+
+{% block head %}
+<link href="{{ url_for('dashboard.static', filename='css/dashboard.css' ) }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+
+{% macro status_badge(status) %}
+{% set badge_config = {
+'running': {'class': 'bg-success', 'icon': 'bi-circle-fill', 'text': 'Running'},
+'healthy': {'class': 'bg-success', 'icon': 'bi-heart-fill', 'text': 'Healthy'},
+'starting': {'class': 'bg-info', 'icon': 'bi-arrow-clockwise', 'text': 'Starting'},
+'restarting': {'class': 'bg-warning', 'icon': 'bi-arrow-repeat', 'text': 'Restarting'},
+'unhealthy': {'class': 'bg-danger', 'icon': 'bi-exclamation-triangle-fill', 'text': 'Unhealthy'},
+'stopped': {'class': 'bg-secondary', 'icon': 'bi-stop-circle', 'text': 'Stopped'},
+'paused': {'class': 'bg-warning', 'icon': 'bi-pause-circle', 'text': 'Paused'},
+'exited': {'class': 'bg-secondary', 'icon': 'bi-x-circle', 'text': 'Exited'},
+'dead': {'class': 'bg-danger', 'icon': 'bi-x-circle-fill', 'text': 'Dead'},
+'created': {'class': 'bg-light text-dark border', 'icon': 'bi-plus-circle', 'text': 'Created'}
+} %}
+
+{% set config = badge_config.get(status, {'class': 'bg-secondary', 'icon': 'bi-question-circle', 'text': 'Unknown'}) %}
+
+<span class="badge {{ config.class }} d-flex align-items-center">
+  <i class="bi {{ config.icon }} me-1" style="font-size: 0.7rem;"></i>
+  {{ config.text }}
+</span>
+{% endmacro %}
+
+{% macro service_item(service) %}
+<div class="service-item border-bottom">
+  <a href="{{ service.homepage_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none d-block">
+    <div class="d-flex align-items-center p-4 service-link">
+      <div class="service-icon-wrapper me-3">
+        <div class="service-icon d-flex align-items-center justify-content-center rounded"
+          data-icon="{{ service.homepage_icon or service.name }}" style="width: 50px; height: 50px;">
+        </div>
+      </div>
+
+      <div class="flex-grow-1 min-width-0">
+        <h6 class="mb-1 fw-semibold">{{ service.homepage_name }}</h6>
+        <p class="mb-0 small">{{ service.homepage_description or 'No description available' }}</p>
+      </div>
+
+      <div class="ms-3 d-flex align-items-center">
+        {{ status_badge(service.container_status) }}
+        <i class="bi bi-box-arrow-up-right ms-2 " style="font-size: 0.8rem;"></i>
+      </div>
+    </div>
+  </a>
+</div>
+{% endmacro %}
+
+{% macro service_group_card(group_name, services) %}
+<div class="col-12 col-xl-6 mb-3">
+  <div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-primary border-0 py-3">
+      <h5 class="card-title mb-0 text-light fw-semibold">
+        <i class="bi bi-folder-fill me-2 opacity-75"></i>
+        {{ group_name }}
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      {% for service in services %}
+      {{ service_item(service) }}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro empty_state() %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="alert alert-info border-0 shadow-sm" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-info-circle fs-4 me-3"></i>
+        <div>
+          <h6 class="alert-heading mb-1">No Services Available</h6>
+          <p class="mb-0 text-muted">No services available, take to your administrator if you are missing services.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="container-fluid py-0 pt-0 px-0">
+  {% if not service_groups %}
+  {{ empty_state() }}
+  {% else %}
+  <div class="row">
+    {% for group_name, services in service_groups.items() %}
+    {{ service_group_card(group_name, services) }}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Initialize all service icons
+    document.querySelectorAll('.service-icon').forEach(function (iconContainer) {
+      const iconName = iconContainer.getAttribute('data-icon');
+      const iconSize = window.innerWidth <= 576 ? 32 : 50;
+      const iconElement = createServiceIcon(iconName, iconSize);
+      iconContainer.appendChild(iconElement);
+    });
+  });
+</script>
+{% endblock %}

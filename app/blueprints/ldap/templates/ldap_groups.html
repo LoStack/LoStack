@@ -1,0 +1,67 @@
+{% extends "ldap_base.html" %}
+
+{% block page_title %}<i class="bi bi-people-fill me-2"></i> LDAP Groups{% endblock %}
+
+{% block ldap_nav_content %}
+<div class="btn-group">
+  <a href="{{ url_for('ldap.create_group') }}" class="btn btn-success">
+    <i class="bi bi-plus-square me-1"></i> Add Group
+  </a>
+</div>
+{% endblock %}
+
+{% block ldap_content %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Group</th>
+            <th>Description</th>
+            <th>Members</th>
+            <th class="table-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in groups %}
+          <tr>
+            <td>
+              <a href="{{ url_for('ldap.edit_group', group_name=group.name) }}" class="text-decoration-none">
+                <div class="d-flex align-items-center">
+                  <div class="group-icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold text-primary">{{ group.name }}</div>
+                  </div>
+                </div>
+              </a>
+            </td>
+            <td>
+              <span class="text-secondary">{{ group.description or 'No description available' }}</span>
+            </td>
+            <td>
+              <span class="badge bg-info">
+                <i class="bi bi-people me-1"></i>{{ group.member_count }} members
+              </span>
+            </td>
+            <td class="table-actions">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('ldap.edit_group', group_name=group.name) }}" class="btn btn-outline-primary"
+                  title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-outline-danger" onclick="deleteGroup('{{ group.name }}')" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

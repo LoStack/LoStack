@@ -1,0 +1,169 @@
+{% set page_title_disabled = True %}
+{% extends "core.html" %}
+
+{% block title %}File Browser - LoStack Admin{% endblock %}
+
+{% block head %}
+<link href="{{ url_for('file_browser.static', filename='css/file_browser.css' ) }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block content %}
+<div class="row file-browser-container">
+  <div class="col-md-4 col-lg-3 file-list-panel p-0 mx-0">
+    <div class="breadcrumb-nav">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item">
+            <a href="#" onclick="navigateToPath('')" class="text-decoration-none">
+              <i class="bi bi-house-fill"></i> Root
+            </a>
+          </li>
+          {% if current_path %}
+          {% set path_parts = current_path.split('/') %}
+          {% for part in path_parts %}
+          {% if not loop.last %}
+          <li class="breadcrumb-item">
+            <a href="#" onclick="navigateToPath('{{ path_parts[:loop.index]|join('/') }}')"
+              class="text-decoration-none">{{ part }}</a>
+          </li>
+          {% else %}
+          <li class="breadcrumb-item active" aria-current="page">{{ part }}</li>
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+        </ol>
+      </nav>
+    </div>
+
+    <div class="file-list px-2" id="fileList">
+      {% if current_path and current_path != '' %}
+      <div class="file-item folder-item"
+        onclick="navigateToPath('{{ parent_path if parent_path is defined else '' }}')">
+        <i class="bi bi-arrow-up file-icon"></i>
+        <span>.. (Parent Directory)</span>
+      </div>
+      {% endif %}
+
+      {% for item in file_list %}
+      {% if item.is_directory %}
+      <div class="file-item folder-item" onclick="navigateToPath('{{ item.path }}')">
+        <i class="bi bi-folder-fill file-icon text-warning"></i>
+        <span>{{ item.name }}</span>
+      </div>
+      {% else %}
+      <div class="file-item"
+        onclick="selectFile('{{ item.path }}', '{{ item.name }}', '{{ item.type }}', {{ item.size }}, '{{ selected_editor_theme }}')">
+        <i class="bi bi-{{ item.icon }} file-icon"></i>
+        <span>{{ item.name }}</span>
+        <span class="file-size">{{ item.size_formatted }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-md-8 col-lg-9 file-viewer-panel mx-0 px-0">
+    <div id="noFileSelected" class="no-file-selected">
+      <div>
+        <i class="bi bi-file-earmark-text display-4 mb-3"></i>
+        <h5>No file selected</h5>
+        <p class="text-muted">Select a file to view or edit</p>
+      </div>
+    </div>
+
+    <div id="editorInterface" class="viewer-content" style="display: none;">
+      <div class="editor-toolbar bg-dark">
+        <div class="file-info text-light">
+          <i class="bi bi-file-earmark-code me-2"></i>
+          <strong id="currentFileName"></strong>
+        </div>
+        <div class="editor-actions">
+          <button type="button" class="btn btn-success btn-sm" id="saveButton" onclick="saveCurrentFile()" disabled>
+            <i class="bi bi-floppy me-1"></i> Save
+          </button>
+        </div>
+      </div>
+      <div id="editorContainer" style="flex-grow: 1;"></div>
+
+      <!-- Editor Footer -->
+      <div class="editor-footer bg-dark text-light">
+        <div class="footer-left">
+          <span id="fileTypeIndicator" class="footer-item"></span>
+          <span id="cursorPosition" class="footer-item">Ln 1, Col 1</span>
+        </div>
+        <div class="footer-right">
+          <span class="footer-item" id="saveStatus">
+            <i class="bi bi-circle-fill text-warning" id="unsavedIcon" style="display: none;"></i>
+            <i class="bi bi-check-circle text-success" id="savedIcon"></i>
+            <span id="saveStatusText">Saved</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div id="imageInterface" class="viewer-content" style="display: none; position: relative;">
+      <div class="editor-toolbar bg-dark">
+        <div class="file-info">
+          <i class="bi bi-image me-2"></i>
+          <strong id="currentImageName"></strong>
+          <span class="text-muted ms-2" id="imageDimensions"></span>
+        </div>
+      </div>
+      <div class="image-viewer" id="imageViewer">
+        <img id="imageDisplay" src="" alt="">
+      </div>
+      <div class="image-controls">
+        <label class="form-label mb-0 me-2">Zoom:</label>
+        <input type="range" class="form-range" id="zoomSlider" min="10" max="500" value="100" style="width: 150px;">
+        <span id="zoomValue" class="ms-2">100%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="unsavedChangesModal" tabindex="-1" aria-labelledby="unsavedChangesModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="unsavedChangesModalLabel">
+          <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+          Unsaved Changes
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Unsaved changes!</p>
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-earmark-code me-2"></i>
+          <strong id="modalFileName"></strong>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="discardChanges()">
+          <i class="bi bi-x-circle me-1"></i>
+          Discard Changes
+        </button>
+        <button type="button" class="btn btn-success" onclick="saveAndProceed()">
+          <i class="bi bi-floppy me-1"></i>
+          Save & Continue
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Hidden form for file operations #}
+<form id="fileForm" style="display: none;">
+  <input type="hidden" name="filepath" id="filepath">
+  <input type="hidden" name="filename" id="filename">
+  <textarea name="filecontent" id="filecontent"></textarea>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('file_browser.static', filename='js/file_browser.js' ) }}"></script>
+{% endblock %}

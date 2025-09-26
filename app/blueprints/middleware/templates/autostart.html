@@ -1,0 +1,197 @@
+{% from 'macros/summary_panel.html' import summary_panel %}
+{% from 'macros/search_bar.html' import search_bar %}
+{% extends "core.html" %}
+
+{% block title %}Service Starting... - LoStack{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-rocket-takeoff-fill me-2"></i>
+Docker Containers
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-secondary text-light">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-terminal me-2"></i>
+            Service Startup Logs:
+          </h5>
+        </div>
+        <div class="card-body bg-dark" style="height: 75vh; overflow-y: auto;" id="messages">
+          {# <!-- Status messages inserted here --> #}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const messages = document.getElementById('messages');
+  const targetUrl = 'https://{{ redirect_url }}';
+  let healthCheckInterval;
+  let healthCheckAttempts = 0;
+  const maxHealthCheckAttempts = 10; // 5 minutes with 5-second intervals
+
+  function addMessage(text, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-2';
+
+    const alertDiv = document.createElement('div');
+    const alertClasses = {
+      'info': 'alert alert-info',
+      'loading': 'alert alert-warning',
+      'complete': 'alert alert-success',
+      'error': 'alert alert-danger'
+    };
+
+    alertDiv.className = `${alertClasses[type] || alertClasses.info} mb-0 py-2 font-monospace`;
+
+    const icons = {
+      'info': 'bi-info-circle-fill',
+      'loading': 'bi-hourglass-split',
+      'complete': 'bi-check-circle-fill',
+      'error': 'bi-exclamation-triangle-fill'
+    };
+
+    const icon = icons[type] || icons.info;
+
+    alertDiv.innerHTML = `
+            <i class="bi ${icon} me-2"></i>
+            <span class="timestamp">${timestamp}:</span> ${text}
+        `;
+
+    messageDiv.appendChild(alertDiv);
+    messages.appendChild(messageDiv);
+
+    messages.scrollTop = messages.scrollHeight;
+
+    messageDiv.style.opacity = '0';
+    setTimeout(() => {
+      messageDiv.style.transition = 'opacity 0.3s ease-in';
+      messageDiv.style.opacity = '1';
+    }, 10);
+  }
+
+  async function checkServiceHealth() {
+    try {
+      healthCheckAttempts++;
+      addMessage(`Health check attempt ${healthCheckAttempts}/${maxHealthCheckAttempts} - Testing service availability...`, 'loading');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(targetUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+        mode: 'no-cors',
+        cache: 'no-cache'
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log(`Health check: Service responding (no-cors mode, status unknown)`);
+      addMessage(`Service is responding! Redirecting in a few seconds...`, 'complete');
+
+      clearInterval(healthCheckInterval);
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 3000); // Wait 3 seconds before redirecting
+
+    } catch (error) {
+      console.log(`Health check error:`, error);
+
+      if (error.name === 'AbortError') {
+        addMessage(`Health check ${healthCheckAttempts} - Request timed out, retrying in {{ refresh_frequency }} seconds...`, 'loading');
+      } else {
+        addMessage(`Health check ${healthCheckAttempts} - Service not ready yet (${error.message}), retrying in {{ refresh_frequency }} seconds...`, 'loading');
+      }
+
+      if (healthCheckAttempts >= maxHealthCheckAttempts) {
+        clearInterval(healthCheckInterval);
+        addMessage('Service health check timed out. Redirecting anyway...', 'error');
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 2000);
+      }
+    }
+  }
+
+  function startHealthCheck() {
+    addMessage('Starting service health monitoring...', 'info');
+    checkServiceHealth();
+    healthCheckInterval = setInterval(checkServiceHealth, {{ refresh_frequency * 1000 }});
+    }
+
+  const eventSource = new EventSource('/middleware/autostart/task-stream/{{ task_id }}');
+  let completed = false;
+
+  eventSource.onmessage = function (event) {
+    try {
+      const data = JSON.parse(event.data);
+      handleMessage(data);
+
+      // Close connection when task is done
+      if (data.type === 'complete' || data.type === 'error' || data.type === 'close') {
+        completed = true;
+        eventSource.close();
+      }
+    } catch (e) {
+      console.error('Error parsing message:', e);
+      addMessage('Error parsing server message', 'error');
+    }
+  };
+
+  eventSource.onerror = function (event) {
+    if (!completed) {
+      addMessage('Connection error - attempting to reconnect...', 'error');
+    }
+  };
+
+  window.addEventListener('beforeunload', function () {
+    eventSource.close();
+    if (healthCheckInterval) {
+      clearInterval(healthCheckInterval);
+    }
+  });
+
+  function handleMessage(data) {
+    switch (data.type) {
+      case 'connected':
+        addMessage('Connected to task stream', 'info');
+        break;
+      case 'status':
+        addMessage(data.message, 'loading');
+        break;
+      case 'progress':
+        addMessage(`${data.action.toUpperCase()} ${data.container}: ${data.status}`, 'loading');
+        break;
+      case 'complete':
+        addMessage(data.message, 'complete');
+        addMessage('Container startup complete! Waiting for service to become available...', 'info');
+        // Start health check instead of immediate redirect
+        startHealthCheck();
+        break;
+      case 'error':
+        addMessage(data.message, 'error');
+        break;
+      case 'heartbeat':
+        // Silent heartbeat - no message needed
+        break;
+      case 'close':
+        addMessage('Stream closed', 'complete');
+        break;
+      default:
+        addMessage(`Unknown message type: ${data.type}`, 'error');
+    }
+  }
+
+  addMessage('Initializing service startup sequence...', 'info');
+</script>
+{% endblock %}

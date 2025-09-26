@@ -1,0 +1,262 @@
+{% from 'macros/summary_panel.html' import summary_panel %}
+{% from 'macros/search_bar.html' import search_bar %}
+{% extends "core.html" %}
+
+{% block title %}Depot - LoStack Admin{% endblock %}
+{% block page_title %}
+<i class="bi bi-shop-window me-2"></i>
+Service Depot
+{% endblock %}
+
+{% block nav_actions %}
+<div class="btn-group" role="group">
+  <button onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_update') }}')"
+    class="btn btn-sm btn-outline-light">
+    <i class="bi bi-update me-1"></i>
+    Update Depot
+  </button>
+  <a href="{{ url_for('depot.depot') }}" class="btn btn-sm btn-outline-light">
+    <i class="bi bi-arrow-clockwise me-1"></i>
+    Refresh
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    {{ summary_panel([
+    {'value': total_count,'label': 'Available','icon': 'box','bg_class': 'bg-info'},
+    {'value': 'Accepting','label': 'Pull Requests!','icon': 'git','bg_class': 'bg-success'},
+    {'value': 'Ready','label': 'To Deploy','icon': 'rocket','bg_class': 'bg-primary'}
+    ]) }}
+
+    {# <!-- Search and Filters --> #}
+    {% if packages %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        {# <!-- Search Bar --> #}
+        {{ search_bar("Search packages by name, description, group, or tags") }}
+
+        <hr class="my-3">
+
+        {# <!-- Group Filter Section --> #}
+        <div class="border-start border-primary border-3 ps-3 mb-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <small class="text-muted fw-medium me-2">Filter by group:</small>
+            <button class="btn btn-outline-primary btn-sm group-tag active" onclick="filterByGroup('all')"
+              data-group="all">
+              <i class="bi bi-grid me-1"></i>All
+            </button>
+            {% for group, count in groups.items() %}
+            <button class="btn btn-outline-secondary text-muted btn-sm group-tag" onclick="filterByGroup('{{ group }}')"
+              data-group="{{ group }}">
+              {{ group }} <span class="badge bg-secondary ms-1">{{ count }}</span>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# <!-- Tags Filter Section --> #}
+        <div class="border-start border-primary border-3 ps-3">
+          <div class="d-flex align-items-center justify-content-between cursor-pointer" onclick="toggleTagsSection()"
+            id="tagsToggle">
+            <div class="d-flex align-items-center">
+              <small class="text-muted fw-medium me-2">Filter by tags:</small>
+              <i class="bi bi-chevron-down text-primary" id="tagsChevron"></i>
+            </div>
+            <small class="text-muted">
+              <span id="tagsSummary">Click to expand tag filters</span>
+            </small>
+          </div>
+
+          <div id="tagsContent" class="collapse">
+            <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+              <button class="btn btn-outline-success btn-sm tag-filter active" onclick="filterByTag('all')"
+                data-tag="all">
+                <i class="bi bi-tags me-1"></i>All
+              </button>
+              {% for tag, count in tags.items() %}
+              <button class="btn btn-outline-secondary text-muted btn-sm tag-filter" onclick="filterByTag('{{ tag }}')"
+                data-tag="{{ tag }}">
+                {{ tag }} <span class="badge bg-secondary ms-1">{{ count }}</span>
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# <!-- Package Grid --> #}
+    {% if packages %}
+    <div class="row g-3" id="serviceGrid">
+      {% for package_name, package in packages.items() %}
+      <div class="col-lg-6 col-xl-4 mb-0 service-item" data-name="{{ package.search_data.name }}"
+        data-title="{{ package.search_data.title }}" data-description="{{ package.search_data.description }}"
+        data-group="{{ package.group or '' }}" data-tags="{{ package.search_data.tags }}">
+        <div class="card shadow depot-card service-card h-100">
+          <div class="card-header bg-primary text-light">
+            <div class="d-flex align-items-start justify-content-between">
+              <div class="flex-grow-1">
+                <h6 class="mb-0 fw-bold d-inline">{{ package.title }}</h6>
+                {% if package.description %}
+                <small class="opacity-75 d-block mt-1">{{ package.description }}</small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                {% if package.group %}
+                <span class="badge bg-info">{{ package.group }}</span>
+                {% endif %}
+              </div>
+
+              <div class="d-flex gap-1 flex-wrap">
+                {% for tag in package.tags %}
+                <span class="badge bg-secondary">{{ tag }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            {# <!-- Service Details --> #}
+            {% if package.details %}
+            <div class="small text-muted my-3">
+              {{ package.details }}
+            </div>
+            {% endif %}
+
+            <hr>
+
+            <div class="mb-3">
+              <div class="small">
+                {# <!-- Primary Service --> #}
+                <div class="mb-3">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-box-fill me-2"></i>
+                    <code class="me-2 text-primary">{{ package.name }}</code>
+                    <small class="text-muted">({{ package.image or 'primary' }})</small>
+                  </div>
+                  {% if package.volumes %}
+                  <div class="ms-2">
+                    {% for volume in package.volumes %}
+                    <div class="volume-item">
+                      <i class="bi bi-hdd me-1"></i>{{ volume }}
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+
+                {# <!-- Dependencies --> #}
+                {% if package.dependencies %}
+                {% for dep_name, dep_data in package.dependencies.items() %}
+                <div class="mb-3">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-box me-2"></i>
+                    <code class="me-2 text-primary">{{ dep_name }}</code>
+                    <small class="text-muted">({{ dep_data.image }})</small>
+                  </div>
+                  {% if dep_data.volumes %}
+                  <div class="ms-3">
+                    {% for volume in dep_data.volumes %}
+                    <div class="volume-item">
+                      <i class="bi bi-hdd me-1"></i>{{ volume }}
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# <!-- Card Footer --> #}
+          <div class="card-footer bg-transparent border-top-0">
+            <div class="d-flex gap-2 justify-content-between align-items-center">
+              <button
+                onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_launch', package=package.name) }}')"
+                class="btn btn-outline-success btn-launch flex-grow-1 shadow-sm-hover">
+                <i class="bi bi-rocket-fill me-2"></i>
+                Launch Service
+              </button>
+
+              {% set project_url = package.labels_dict.get('lostack.project_url') %}
+              {% if project_url %}
+              <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-github"></i>
+              </a>
+
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="noResults" class="text-center py-5 d-none">
+      <div class="card">
+        <div class="card-body py-5">
+          <i class="bi bi-search display-1 text-muted mb-3"></i>
+          <h4 class="text-muted mb-3">No Services Found</h4>
+          <p class="text-muted mb-4">
+            No results found.
+          </p>
+          <button class="btn btn-primary" onclick="clearSearch()">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    {# <!-- Empty --> #}
+    <div class="text-center py-5">
+      <div class="card">
+        <div class="card-body py-5">
+          <i class="bi bi-box display-1 text-muted mb-3"></i>
+          <h4 class="text-muted mb-3">No Services Available</h4>
+          <p class="text-muted mb-4">
+            There might be something wrong with the depot, or you have installed all services.
+          </p>
+          <div class="d-flex gap-2 justify-content-center">
+            <a href="{{ url_for('depot.depot') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Refresh
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('depot.static', filename='js/depot.js' ) }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const packagesData = {{ packages| tojson | safe
+  }};
+  addServiceIcons(packagesData);
+
+  const searchInput = document.getElementById('Search');
+  if (searchInput) {
+    searchInput.addEventListener('input', performSearch);
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') clearSearch();
+    });
+  }
+  updateTagsSummary();
+});
+</script>
+{% endblock %}

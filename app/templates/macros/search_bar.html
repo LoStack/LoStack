@@ -1,0 +1,15 @@
+{% macro search_bar(placeholder, clear_fn='clearSearch') %}
+<div class="input-group mb-3">
+  <span class="input-group-text"><i class="bi bi-search"></i></span>
+  <input 
+    type="text"
+    id="Search"
+    class="form-control"
+    placeholder="{{ placeholder }}"
+    autocomplete="off"
+  >
+  <button class="btn btn-outline-secondary" type="button" onclick="{{ clear_fn }}(this)">
+    <i class="bi bi-x-lg"></i>
+  </button>
+</div>
+{% endmacro %}

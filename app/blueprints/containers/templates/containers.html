@@ -1,0 +1,91 @@
+{% from 'macros/summary_panel.html' import summary_panel %}
+{% from 'macros/search_bar.html' import search_bar %}
+{% extends "core.html" %}
+
+{% block title %}Docker Containers - LoStack Admin{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-box-fill me-2"></i>
+Docker Containers
+{% endblock %}
+
+{% block nav_actions %}
+<div class="form-check form-switch me-3">
+  <input class="form-check-input" type="checkbox" id="autoRefresh">
+  <label class="form-check-label text-light" for="autoRefresh">Auto Refresh</label>
+</div>
+<button class="btn btn-outline-light btn-sm" onclick="refreshData()">
+  <i class="bi bi-arrow-clockwise me-1"></i>
+  Refresh
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    {% set running_count = containers | selectattr('State', 'equalto', 'running') | list | length %}
+    {% set stopped_count = containers | selectattr('State', 'equalto', 'exited') | list | length %}
+
+    {{ summary_panel([
+      {'id': 'runningCount', 'value': running_count, 'label': 'Running', 'icon': 'play-circle', 'bg_class': 'bg-primary'},
+      {'id': 'stoppedCount', 'value': stopped_count, 'label': 'Stopped', 'icon': 'stop-circle', 'bg_class': 'bg-light', 'text_class': 'text-dark'},
+      {'id': 'totalCount', 'value': containers | length, 'label': 'Total', 'icon': 'boxes', 'bg_class': 'bg-dark', 'text_class': 'text-light'}
+    ]) }}
+
+    {{ search_bar("Search containers by name") }}
+
+    {# Container cards #}
+    <div class="row g-3 mb-5" id="containersCards">
+      {# Cards populated by JavaScript #}
+    </div>
+
+    {# Error message #}
+    <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      <span id="errorText"></span>
+    </div>
+  </div>
+</div>
+
+{# On Remove Container Confirmation Modal #}
+<div class="modal fade" id="removeContainerModal" tabindex="-1" aria-labelledby="removeContainerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-light">
+        <h5 class="modal-title" id="removeContainerModalLabel">
+          <i class="bi bi-exclamation-triangle me-2"></i> Remove Container
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to remove the container <strong id="containerNameToRemove"></strong>?</p>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i> This action cannot be undone. All non-persistent container data will be permanently lost.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmRemoveButton">
+          <i class="bi bi-trash me-2"></i> Remove Container
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('containers.static', filename='js/containers.js' ) }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  refreshData();
+  setupAutoRefresh();
+  setupRemovalConfirmation();
+
+  document.getElementById('Search').addEventListener('input', filterContainers);
+  window.addEventListener('beforeunload', () => autoRefreshInterval && clearInterval(autoRefreshInterval));
+});
+
+window.addEventListener('beforeunload', () => autoRefreshInterval && clearInterval(autoRefreshInterval));
+</script>
+{% endblock %}

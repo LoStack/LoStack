@@ -1,0 +1,94 @@
+{% extends "ldap_base.html" %}
+
+{% block page_title %}<i class="bi bi-{% if action == 'Create' %}plus-square{% else %}gear{% endif %} me-2"></i> {{
+action }} Group{% endblock %}
+
+{% block ldap_nav_content %}
+<div class="btn-group">
+  <a href="{{ url_for('ldap.groups') }}" class="btn btn-outline-light">
+    <i class="bi bi-arrow-left me-1"></i> Back to Groups
+  </a>
+</div>
+{% endblock %}
+
+{% block ldap_content %}
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row">
+    <div class="col-lg-6 mb-3">
+      <div class="card">
+        <div class="card-header bg-dark text-light">
+          <h5 class="mb-0">Group Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""),
+            readonly=(action == 'Edit')) }}
+            {% if form.name.errors %}
+            <div class="invalid-feedback">
+              {% for error in form.name.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control") }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-dark text-light">
+          <h5 class="mb-0">Group Members</h5>
+        </div>
+        <div class="card-body">
+          {{ form.members.label(class="form-label") }}
+          <div class="form-check-group" style="max-height: 400px; overflow-y: auto;">
+            {% for subfield in form.members %}
+            <div class="form-check">
+              {{ subfield(class="form-check-input") }}
+              {{ subfield.label(class="form-check-label") }}
+            </div>
+            {% endfor %}
+          </div>
+          {% if not form.members.choices %}
+          <div class="text-muted text-center py-3">
+            <i class="bi bi-info-circle"></i> No users available
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if action == 'Edit' %}
+      <div class="card mt-3">
+        <div class="card-header bg-danger-subtle">
+          <h5 class="mb-0 text-danger">Danger Zone</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small">Once you delete a group, there is no going back.</p>
+          <button type="button" class="btn btn-danger btn-sm w-100" onclick="deleteGroup('{{ group_name }}')">
+            <i class="bi bi-trash me-1"></i> Delete Group
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row mt-3 mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-lg me-1"></i> {{ action }} Group
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

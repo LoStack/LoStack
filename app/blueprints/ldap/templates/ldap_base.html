@@ -1,0 +1,83 @@
+{% extends "core.html" %}
+
+{% block head %}
+<link href="{{ url_for('ldap.static', filename='css/ldap.css' ) }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block content %}
+<nav class="ldap-nav px-2 py-2 bg-dark mb-3 d-flex justify-content-between align-items-center">
+  <ul class="nav nav-pills">
+    <li class="nav-item">
+      <a class="nav-link px-3 py-2 my-2 mx-2 {% if 'user' in request.endpoint %}active{% endif %}"
+        href="{{ url_for('ldap.users') }}">
+        <i class="bi bi-person-badge me-1"></i> Users
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-2 my-2 mx-2 {% if 'group' in request.endpoint %}active{% endif %}"
+        href="{{ url_for('ldap.groups') }}">
+        <i class="bi bi-people me-1"></i> Groups
+      </a>
+    </li>
+  </ul>
+
+  <div class="ms-auto">
+    <div class="mx-3">
+      {% block ldap_nav_content %}
+      {% endblock %}
+    </div>
+  </div>
+</nav>
+{% block ldap_content %}
+{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function deleteUser(username) {
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+      fetch(`{{ url_for('ldap.delete_user', username='PLACEHOLDER') }}`.replace('PLACEHOLDER', username), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Error: ' + data.message);
+          }
+        })
+        .catch(error => {
+          alert('Error deleting user: ' + error);
+        });
+    }
+  }
+
+  function deleteGroup(groupName) {
+    if (confirm(`Are you sure you want to delete group "${groupName}"? This action cannot be undone.`)) {
+      fetch(`{{ url_for('ldap.delete_group', group_name='PLACEHOLDER') }}`.replace('PLACEHOLDER', groupName), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Error: ' + data.message);
+          }
+        })
+        .catch(error => {
+          alert('Error deleting group: ' + error);
+        });
+    }
+  }
+</script>
+{% endblock %}

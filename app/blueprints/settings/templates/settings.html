@@ -1,0 +1,139 @@
+{% extends "core.html" %}
+
+{% block title %}LoStack Admin{% endblock %}
+{% block page_title %}
+<i class="bi bi-sliders me-2"></i>
+LoStack Configuration
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-dark text-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-sliders me-2"></i>
+          <h5 class="mb-0">LoStack Defaults</h5>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <p class="text-muted mb-4">
+          Default values will be applied to new services.
+          Existing services will keep their current settings unless manually updated.
+        </p>
+
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                {{ form.domain.label(class="form-label fw-semibold") }}
+                {{ form.domain(class="form-control" + (" is-invalid" if form.domain.errors else "")) }}
+                {% if form.domain.description %}
+                <div class="form-text">{{ form.domain.description }}</div>
+                {% endif %}
+                {% for error in form.domain.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Display Options</label>
+                <div class="form-check">
+                  {{ form.show_details(class="form-check-input") }}
+                  {{ form.show_details.label(class="form-check-label") }}
+                  {% if form.show_details.description %}
+                  <div class="form-text">{{ form.show_details.description }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                {{ form.session_duration.label(class="form-label fw-semibold") }}
+                {{ form.session_duration(class="form-control" + (" is-invalid" if form.session_duration.errors else ""))
+                }}
+                {% if form.session_duration.description %}
+                <div class="form-text">{{ form.session_duration.description }}</div>
+                {% endif %}
+                {% for error in form.session_duration.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                {{ form.refresh_frequency.label(class="form-label fw-semibold") }}
+                {{ form.refresh_frequency(class="form-control" + (" is-invalid" if form.refresh_frequency.errors else
+                "")) }}
+                {% if form.refresh_frequency.description %}
+                <div class="form-text">{{ form.refresh_frequency.description }}</div>
+                {% endif %}
+                {% for error in form.refresh_frequency.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-around">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const durationField = document.getElementById('session_duration');
+    const frequencyField = document.getElementById('refresh_frequency');
+
+    function validateDuration(field) {
+      const pattern = /^\d+[smh]$/;
+      const value = field.value.trim();
+
+      if (value && !pattern.test(value)) {
+        field.classList.add('is-invalid');
+        return false;
+      } else {
+        field.classList.remove('is-invalid');
+        return true;
+      }
+    }
+
+    function validateFrequency(field) {
+      const pattern = /^\d+[sm]s?$/;
+      const value = field.value.trim();
+
+      if (value && !pattern.test(value)) {
+        field.classList.add('is-invalid');
+        return false;
+      } else {
+        field.classList.remove('is-invalid');
+        return true;
+      }
+    }
+
+    if (durationField) {
+      durationField.addEventListener('blur', () => validateDuration(durationField));
+    }
+
+    if (frequencyField) {
+      frequencyField.addEventListener('blur', () => validateFrequency(frequencyField));
+    }
+  });
+</script>
+{% endblock %}

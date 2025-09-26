@@ -1,0 +1,1 @@
+from .ezldap import setup_ldap_manager

@@ -1,0 +1,39 @@
+.service-item:last-child {
+border-bottom: none !important;
+}
+
+.service-link {
+transition: background-color 0.15s ease-in-out;
+}
+
+.service-link:hover {
+background-color: var(--bs-dark);
+color: var(--bs-light);
+}
+
+.service-icon-wrapper {
+flex-shrink: 0;
+}
+
+.min-width-0 {
+min-width: 0;
+}
+
+.card {
+transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+transform: translateY(-2px);
+box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Status badge improvements */
+.badge {
+font-weight: 500;
+padding: 0.375em 0.75em;
+}
+
+.badge i {
+opacity: 0.8;
+}

@@ -1,0 +1,77 @@
+{% extends "ldap_base.html" %}
+
+{% block page_title %} <i class="bi bi-person-badge-fill me-2"></i> LDAP Users{% endblock %}
+
+{% block ldap_nav_content %}
+<div class="btn-group">
+  <a href="{{ url_for('ldap.create_user') }}" class="btn btn-success">
+    <i class="bi bi-person-plus me-1"></i> Add User
+  </a>
+</div>
+{% endblock %}
+
+{% block ldap_content %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Groups</th>
+            <th>Status</th>
+            <th class="table-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+
+          <tr>
+            <td>
+              <a href="{{ url_for('ldap.edit_user', username=user.username) }}" class="text-decoration-none">
+                <div class="d-flex align-items-center">
+                  <div class="user-avatar me-3">
+                    {{ user.first_name[0] if user.first_name else user.username[0] }}{{ user.last_name[0] if
+                    user.last_name else '' }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-primary">{{ user.first_name }} {{ user.last_name }}</div>
+                    <small class="text-secondary">{{ user.username }}</small>
+                  </div>
+                </div>
+              </a>
+            </td>
+            <td class="text-secondary">{{ user.email }}</td>
+            <td>
+              {% for group in user.groups[:3] %}
+              <span class="badge bg-secondary me-1">{{ group }}</span>
+              {% endfor %}
+              {% if user.groups|length > 3 %}
+              <span class="badge bg-light text-dark">+{{ user.groups|length - 3 }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge status-badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
+            </td>
+            <td class="table-actions">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('ldap.edit_user', username=user.username) }}" class="btn btn-outline-primary"
+                  title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-outline-danger" onclick="deleteUser('{{ user.username }}')" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

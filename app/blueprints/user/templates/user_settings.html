@@ -1,0 +1,197 @@
+{% extends "core.html" %}
+
+{% block title %}User Settings - LoStack Admin{% endblock %}
+{% block page_title %}<i class="bi bi-person-gear me-2"></i> User Settings{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-dark text-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-person-gear me-2"></i>
+          <h5 class="mb-0">User Settings</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-4">
+          Configure LoStack interface.
+          These settings only affect your account.
+        </p>
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          {# <!-- Theme Settings Row --> #}
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                {{ form.theme.label(class="form-label fw-semibold") }}
+                {{ form.theme(class="form-select" + (" is-invalid" if form.theme.errors else "")) }}
+                <div class="form-text">{{ form.theme.description }}</div>
+                {% for error in form.theme.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <div class="mb-3">
+                {{ form.editor_theme.label(class="form-label fw-semibold") }}
+                {{ form.editor_theme(class="form-select" + (" is-invalid" if form.editor_theme.errors else "")) }}
+                <div class="form-text">{{ form.editor_theme.description }}</div>
+                {% for error in form.editor_theme.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            {# <!-- Custom CSS Editor Column --> #}
+            <div class="col-md-8">
+              <div class="mb-3">
+                {{ form.custom_css.label(class="form-label fw-semibold") }}
+                <div class="position-relative">
+                  <div id="customCssEditorContainer" style="height: 300px;"></div>
+                  <textarea id="custom_css" name="custom_css"
+                    style="display: none;">{{ form.custom_css.data or '' }}</textarea>
+                  <div class="position-absolute top-0 end-0 mt-2 me-3"
+                    style="z-index: 10; background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 3px;">
+                    <small class="text-muted" id="css-char-count">0 / 10,000</small>
+                  </div>
+                </div>
+                <div class="form-text">{{ form.custom_css.description }}</div>
+                {% for error in form.custom_css.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-center">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/codemirror/5.65.16/mode/css/css.min.js' ) }}"></script>
+<script>
+  let cssEditor = null;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    const customCssTextarea = document.getElementById('custom_css');
+    const charCountElement = document.getElementById('css-char-count');
+    const editorThemeSelect = document.getElementById('editor_theme');
+
+    const themeSelect = document.getElementById('theme'); // your form.theme select
+    const bootswatchLink = document.getElementById('bootswatch-theme');
+
+    if (themeSelect) {
+      themeSelect.addEventListener('change', function () {
+        if (this.value && this.value !== 'default') {
+          bootswatchLink.href = `{{ url_for('static', filename='css/bootswatch/') }}${this.value}/bootstrap.min.css`;
+        } else {
+          bootswatchLink.href = '';
+        }
+      });
+    }
+
+    function initializeCssEditor() {
+      const container = document.getElementById('customCssEditorContainer');
+      if (container && customCssTextarea) {
+        cssEditor = CodeMirror(container, {
+          value: customCssTextarea.value || '',
+          mode: 'css',
+          theme: '{{ current_user.editor_theme }}',
+          lineNumbers: true,
+          lineWrapping: true,
+          autoCloseBrackets: true,
+          matchBrackets: true,
+          styleActiveLine: true,
+          indentUnit: 2,
+          tabSize: 2,
+          extraKeys: {
+            "Tab": function (cm) {
+              if (cm.somethingSelected()) {
+                cm.indentSelection("add");
+              } else {
+                cm.replaceSelection("  ", "end");
+              }
+            }
+          }
+        });
+
+        cssEditor.on('change', function () {
+          customCssTextarea.value = cssEditor.getValue();
+          updateCharCount();
+        });
+
+        updateCharCount();
+      }
+    }
+
+    if (editorThemeSelect) {
+      editorThemeSelect.addEventListener('change', function () {
+        if (cssEditor) {
+          cssEditor.setOption('theme', this.value);
+
+          // Load new theme
+          if (this.value && this.value !== 'default') {
+            const existingLink = document.querySelector('link[href*="/theme/"]');
+            const newLink = document.createElement('link');
+            newLink.rel = 'stylesheet';
+            newLink.type = 'text/css';
+            newLink.href = `{{ url_for('static', filename='css/codemirror/5.65.16/theme/') }}${this.value}.min.css`;
+            document.head.appendChild(newLink);
+
+            // Remove old theme
+            newLink.onload = function () {
+              if (existingLink && existingLink.href !== newLink.href) {
+                existingLink.remove();
+              }
+            };
+          } else {
+            const existingLink = document.querySelector('link[href*="/theme/"]');
+            if (existingLink) {
+              existingLink.remove();
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharCount() {
+      if (cssEditor && charCountElement) {
+        const length = cssEditor.getValue().length;
+        charCountElement.textContent = `${length.toLocaleString()} / 10,000`;
+        if (length > 9000) {
+          charCountElement.className = 'text-danger';
+        } else if (length > 7000) {
+          charCountElement.className = 'text-warning';
+        } else {
+          charCountElement.className = 'text-muted';
+        }
+      }
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        if (cssEditor) {
+          customCssTextarea.value = cssEditor.getValue();
+        }
+
+        const submitBtn = form.querySelector('input[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.value = 'Saving...';
+        }
+      });
+    }
+
+    initializeCssEditor();
+  });
+</script>
+{% endblock %}
