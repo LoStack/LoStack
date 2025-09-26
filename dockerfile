@@ -35,6 +35,6 @@ ENTRYPOINT ["python3", "-u", "run.py"]
 # Dev environment stage
 FROM builder AS dev-envs
 
-# Add user
-RUN addgroup -S docker && \
-    adduser -S --shell /bin/bash --ingroup docker 
+# # Add user
+# RUN addgroup -S docker && \
+#     adduser -S --shell /bin/bash --ingroup docker 
