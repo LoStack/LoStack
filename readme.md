@@ -66,7 +66,7 @@ In addition to services, LoStack allows basic management of Docker containers th
 
 ## Depot
 
-LoStack uses a git repo as the backend for its repo, by default it points to https://github.com/LoStack/LoStack-Depot. LoStack depots are generally fairly small as they consist of just a collection of YAML files.
+LoStack uses a git repo as the backend for its depot, by default it points to https://github.com/LoStack/LoStack-Depot. LoStack depots are generally fairly small as they consist of just a collection of YAML files.
 
 Depot packages are just Docker Compose files with labeling, and a consistent container naming scheme. Depot containers are added to a separate `lostack-compose.yml` file, next to your core `docker-compose.yml` file, so that if something breaks during the installation / uninstalliation of a service, your primary services file will remain intact and usable.
 
@@ -77,8 +77,8 @@ Currently, all containers are added to the same `traefik_network` Docker network
 
 ## File Editor
 
-LoStack includes a very built-in text editor / file explorer.
-It currently only supports for file editing, and lacks features for creating new files, and downloading files.
+LoStack includes a basic built-in text editor / file explorer.
+It currently only supports for file editing, and lacks features for creating new files, and downloading files. It supports CodeMirror themes, with linting and syntax highlighting for most common languages.
 
 ![LoStack Files](docs/images/files.png?raw=true "LoStack Files")
 
