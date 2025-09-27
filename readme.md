@@ -1,6 +1,6 @@
 # LoStack - Easy Docker Service Management
 
-An opinionated, highly integrated container for deploying, and managing Docker services. Automates the hard parts of deploying a multi-user environment with SSO, easy group-based access control, automatic service discovery, routing, and more.
+An opinionated, highly integrated container for deploying, and managing Docker services: LoStack automates the hard parts of deploying a multi-user environment with Single Sign-On (SSO), easy group-based access control, automatic service discovery, routing, and more.
 
 
 ![LoStack Architecture](docs/images/architecture.png?raw=true "LoStack Architecture")
@@ -13,9 +13,9 @@ Host OS (Ubuntu, Raspbian recommended)
 ├── Docker + Compose
 └── Service Stack
     ├── Traefik (Reverse Proxy, routing, and middleware)
-    ├── Authelia (Authentication)
+    ├── Authelia (Universal authentication and SSO)
     ├── OpenLDAP (Users and groups backend)
-    ├── MariaDB (DB for Authelia and LoStack)
+    ├── MariaDB (Database services for Authelia and LoStack)
     ├── LoStack (Container Management and configuration)
     ├── CoreDNS (DNS Resolution) [Optional]
     └── Application Services
@@ -24,15 +24,15 @@ Host OS (Ubuntu, Raspbian recommended)
 ## Goals
 
 - **Easy Configuration**:
-    - Configure your services either through simple Docker labels, or through the web UI
+    - Configure all of your services either through simple, easy-to-understand Docker labels, or through the simple and intuitive web UI
     - Automatically route services over HTTPS through Traefik without exposing ports on your local network.
-    - Automatically generate self-signed certs on initial deployment for easy setup. Optionally supply your own
-    - Automatically shut down services when not in use
+    - Automatically generate self-signed certs on initial deployment for easy setup. Or if you'd rather, you can also just supply your own!
+    - Automatically shut down services when not in use for power-saving, or leave them running for ready access when you need them
 - **Web-Based Management**:
-    - Depot, container, and service-group manager. Customizable dashbord only shows what users have access to.
-    - UI Developed in Bootstrap, with attention to mobile support
+    - Application depot, container, and service-group manager. Customizable dashbord only shows what a user has permissions to access.
+    - UI Developed in Bootstrap with attention to mobile support
     - Per-user theme system, over a dozen built-in UI themes, customizable CSS, and dozens of text-editor themes
-    - A growing, community-driven depot of pre-configured services
+    - A growing, community-driven depot of pre-configured services including music library managers, ebook readers, chat clients, file servers, and plenty more!
     - Integrated file editor, live log viewer, and more planned (SSH and FTP clients coming soon) 
 - **User Management**:
     - Create and manage system Users and Groups
@@ -66,7 +66,7 @@ In addition to services, LoStack allows basic management of Docker containers th
 
 ## Depot
 
-LoStack uses a git repo as the backend for its depot, by default it points to https://github.com/LoStack/LoStack-Depot. LoStack depots are generally fairly small as they consist of just a collection of YAML files.
+LoStack uses a git repo as the backend for its depot. By default it points to https://github.com/LoStack/LoStack-Depot. LoStack depots are generally fairly small as they consist of just a collection of YAML files.
 
 Depot packages are just Docker Compose files with labeling, and a consistent container naming scheme. Depot containers are added to a separate `lostack-compose.yml` file, next to your core `docker-compose.yml` file, so that if something breaks during the installation / uninstalliation of a service, your primary services file will remain intact and usable.
 
