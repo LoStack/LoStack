@@ -124,8 +124,32 @@ It currently only has support for text-file editing, and lacks features for crea
 - **Access Scheduling**:
     - Specify when groups have access to container.
 
+# Technologies / Licensing:
+
+### LoStack WebUI
+- **[ANSI Up](https://github.com/drudru/ansi_up)** [MIT]
+- **[Bootstrap](https://getbootstrap.com/)** [MIT]
+- **[Bootstrap Icons](https://icons.getbootstrap.com/)** [MIT]
+- **[Bootswatch Themes](https://bootswatch.com/)** [MIT]
+- **[CodeMirror 5](https://github.com/codemirror/codemirror5)** [MIT]
+- **[Homarr Icons](https://github.com/homarr-labs/dashboard-icons)** [Apache 2]
+- **[JS-YAML](https://www.npmjs.com/package/js-yaml)** [MIT]
+- **[Pictogrammers Material Design Icons]()** [[Pictogrammers Free License + MIT](https://pictogrammers.com/docs/general/license/)]
+
+### LoStack Backend
+- **[Flask](https://flask.palletsprojects.com/en/stable/)** [BSD-3]
+- **[Python](https://docs.python.org/)** [[Python Software License](https://docs.python.org/3/license.html)]
+- **[Docker](https://www.docker.com/)** 
+- **[Docker Compose Plugin](https://docs.docker.com/compose/install/linux/)** [Apache 2]
+
+### Integrated Containers
+- **[Authelia](https://github.com/authelia/authelia)** [Apache 2]
+- **[Traefik](https://github.com/traefik/traefik)** [MIT]
+- **[OpenLDAP](https://www.openldap.org/)** [[OpenLDAP Public License](https://www.openldap.org/software/release/license.html)]
+- **[MariaDB](https://mariadb.com/)** [[MariaDB License](https://mariadb.com/docs/general-resources/community/community/faq/licensing-questions/licensing-faq)]
+
 # Contributors:
- - Ultimaterez (alpha tester / feedback / depot / readme)
+ - [Ultimaterez](https://github.com/ultimaterez) (alpha tester / feedback / depot / readme)
 
 # Special Thanks:
  - Olaf (feedback / ideas / he's good people)

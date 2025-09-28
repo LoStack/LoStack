@@ -27,6 +27,7 @@ class RepoManager:
         self.repo_path = Path(repo_path)
         self.repo_url = repo_url
         self.branch = branch
+        self.ensure_repo()
 
     def _run(
         self,
