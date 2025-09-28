@@ -6,9 +6,6 @@ LoStack serves as a simple way to automate and standardize service installation,
 
 ![LoStack Architecture](docs/images/architecture.png?raw=true "LoStack Architecture")
 
-## Dependencies
-
-LoStack is highly integrated with its dependencies
 ```
 Host OS (Ubuntu, Raspbian recommended)
 ├── Docker + Compose
@@ -20,6 +17,11 @@ Host OS (Ubuntu, Raspbian recommended)
     ├── LoStack (Container Management and configuration)
     └── CoreDNS (DNS Resolution) [Optional]
 ```
+
+## Setup
+
+While not terribly complicated, LoStack's setup can take several paths depending on how you plan on using it. To simplify setup, LoStack provides several setup scripts, a preconfigured docker-compose.yml file, and template env file in the
+[**LoStack/LoStack-Setup**](https://github.com/LoStack/LoStack-Setup) repo.
 
 ## Features
 
@@ -51,8 +53,6 @@ Host OS (Ubuntu, Raspbian recommended)
     - Compatible with getHomePage! Services installed through the depot will appear on the getHomePage dashboard automatically.
     - WIP plugin system coming soon - will allow the community to write plugins that add new functionality to LoStack.
     - WIP API system coming soon.
-
-See the [LoStack-Setup](https://github.com/LoStack/LoStack-Setup) repo for a detailed setup guide.
 
 In order for your service groups to show up in LoStack, you must name and label them appropriately.
 This process is fairly simple, see the guide in the [LoStack-Depot](https://github.com/LoStack/LoStack-Depot) repo.

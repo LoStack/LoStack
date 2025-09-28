@@ -34,7 +34,6 @@ def _if_not_exists_write(dest, content, conditional=True) -> None:
         return # Do nothing
     parent = os.path.dirname(dest)
     if not os.path.exists(parent):
-        print("MAKING PARENT", parent)
         os.makedirs(parent)
     with open(dest, "w+") as f:
         f.write(content)
