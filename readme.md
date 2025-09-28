@@ -1,6 +1,8 @@
 # LoStack - Easy Docker Service Management
 
-An opinionated, highly integrated service for deploying, and managing Docker services. Automates the hard parts of deploying a multi-user environment with SSO, easy group-based access control, automatic service discovery, routing, and more.
+A *"One Container to Rule Them All"* approach to create a multi-user Docker ecosystem in minutes.
+
+LoStack serves as a simple way to automate and standardize service installation, and provide a friendly way to handle user management, group-based access control, service discovery, routing, log inspection, Docker container actions, and more.
 
 
 ![LoStack Architecture](docs/images/architecture.png?raw=true "LoStack Architecture")
@@ -17,32 +19,38 @@ Host OS (Ubuntu, Raspbian recommended)
     ├── OpenLDAP (Users and groups backend)
     ├── MariaDB (DB for Authelia and LoStack)
     ├── LoStack (Container Management and configuration)
-    ├── CoreDNS (DNS Resolution) [Optional]
-    └── Application Services
+    └── CoreDNS (DNS Resolution) [Optional]
 ```
 
-## Goals
+## Features
 
 - **Easy Configuration**:
     - Configure your services either through simple Docker labels, or through the web UI
     - Automatically route services over HTTPS through Traefik without exposing ports on your local network.
-    - Automatically generate self-signed certs on initial deployment for easy setup. Optionally supply your own
-    - Automatically shut down services when not in use
+    - Automatically generate self-signed certs on initial deployment for easy setup. Optionally supply your own.
+- **Scale-To-Zero**:
+    - Services can be configured to automatically start / stop automatically after user inactiviy.
 - **Web-Based Management**:
     - Depot, container, and service-group manager. Customizable dashbord only shows what users have access to.
     - UI Developed in Bootstrap, with attention to mobile support
-    - Per-user theme system, over a dozen built-in UI themes, customizable CSS, and dozens of text-editor themes
-    - A growing, community-driven depot of pre-configured services
-    - Integrated file editor, live log viewer, and more planned (SSH and FTP clients coming soon) 
+    - Per-user theme system, over a dozen built-in UI themes, customizable CSS, and dozens of text-editor themes.
+    - Integrated file editor, live log viewer, and more planned (SSH and FTP clients coming soon).
 - **User Management**:
-    - Create and manage system Users and Groups
-    - Easily configure which groups have access to which services
-    - SSO through Authelia Auth + LoStack RBAC and Auto-Login features
+    - Create and manage system Users and Groups.
+    - Easily configure which groups have access to which services.
+    - SSO through Authelia Auth + LoStack RBAC and Auto-Login features.
+- **Easy Installs**:
+    - A growing, community-driven depot of pre-configured services.
+    - See [LoStack-Depot](https://github.com/LoStack/LoStack-Depot) for a full list of Packages.
+- **Integrations**:
+    - Compatible with getHomePage! Services installed through the depot will appear on the getHomePage dashboard automatically.
+    - WIP plugin system coming soon - will allow the community to write plugins that add new functionality to LoStack.
+    - WIP API system coming soon.
 
+See the [LoStack-Setup](https://github.com/LoStack/LoStack-Setup) repo for a detailed setup guide.
 
-
-See the [LoStack Setup](https://github.com/LoStack/LoStack-Setup) repo for a detailed setup guide.
-
+In order for your service groups to show up in LoStack, you must name and label them appropriately.
+This process is fairly simple, see the guide in the [LoStack-Depot](https://github.com/LoStack/LoStack-Depot) repo.
 
 ## Automated Dashboard
 
@@ -53,7 +61,7 @@ LoStack automatically generates a dashboard that only shows services a user has 
 
 ## Service Management
 
-LoStacks revolves around the idea of "services," groups of docker containers needed to support an endpoint. LoStack provides features to easily manage these groups with simple button presses.
+LoStacks revolves around the idea of "services," groups of Docker containers needed to support an endpoint. LoStack provides features to easily manage these groups with simple button presses.
 
 ![LoStack Services](docs/images/services.png?raw=true "LoStack Services")
 
@@ -77,20 +85,47 @@ Currently, all containers are added to the same `traefik_network` Docker network
 
 ## File Editor
 
-LoStack includes a basic built-in text editor / file explorer.
-It currently only supports for file editing, and lacks features for creating new files, and downloading files. It supports CodeMirror themes, with linting and syntax highlighting for most common languages.
+LoStack includes a basic text editor / file explorer.
+It currently only has support for text-file editing, and lacks features for creating new files, and downloading files. It supports CodeMirror themes, with linting and syntax highlighting for most common languages.
 
 ![LoStack Files](docs/images/files.png?raw=true "LoStack Files")
 
+### Planned features
+
+- **Automatic Container Segregation**:
+    - LoStack will automatically create Docker networks for services:
+        - A bridge network from the primary container to Traefik
+        - A bridge network to connect container to its dependencies if more than one container exists in the group 
+- **Multi-Compose System**:
+    - Support creating a compose file per-package, or select existing compose files to add the service to.
+- **Multi-Depot System**:
+    - Support multiple depots, and create depots targeting specific architectures (not all packages work on arm for example).
+- **Traefik Routing**:
+    - GUI menu similar to the service menu for creating external routes (need to figure out how to cleanly handle inscure transport, and other use cases, as well as ACL handling).
+- **File Browser Improvements**:
+    - Add support for downloading / uploading files.
+    - Add support for changing a file's permissions with a right-click menu.
+- **First-time-setup**:
+    - Change many settings currently supplied via ENV to a first-time-setup ui flow when the admin first connects.
+- **Integrated Console / SSH Client**:
+    - Admins will be able to create SSH credentials, and specify groups / users that have access to the SSH session. Available SSH will show up in a tab on the dashboard.
+- **Package Templater / Depot Editor**:
+    - Admin tool to easily create new packages from existing docker compose files, and save them into a depot for easy depot creation.
+- **Container Auto-Update**:
+    - Partially implemented / commented. Will implement when stable.
+    - Automatically update containers before auto-start.
+- **Container Scheduling**:
+    - Specify downtimes when containers will be stopped and cannot be auto-started (return 403).
+- **Access Scheduling**:
+    - Specify when groups have access to container.
 
 # Contributors:
- - None yet, make a PR!
+ - Ultimaterez (alpha tester / feedback / depot / readme)
 
 # Special Thanks:
- - Ultimaterez (alpha tester / feedback)
- - Olaf (feedback / ideas)
+ - Olaf (feedback / ideas / he's good people)
  - Machstem (feedback / ideas)
- - [David C.](https://github.com/CheeseCake87) (feedback / ideas)
+ - [David C.](https://github.com/CheeseCake87) (feedback / ideas / code review)
  - [Flask Discord](https://discord.gg/B6AGZRP)
  - [Homepage Discord](https://discord.com/invite/k4ruYNrudu)
  - [Authelia Discord](https://discord.authelia.com/)

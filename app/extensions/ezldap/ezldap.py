@@ -1,4 +1,5 @@
 import os
+import time
 import ldap
 import ldap.modlist as modlist
 from ldap import LDAPError
@@ -84,6 +85,22 @@ class LDAPManager:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
         elif self.tls_verify_client == "demand":
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+
+    def await_connection(self):
+        self.logger.info("Connecting to LDAP server...")
+        attempt = 0
+        while attempt < 10:
+            try:
+                self._connect()
+                if self.connection:
+                    self.logger.info(f"LDAP connection successful on attempt {attempt+1}")
+                    return True
+            except ldap.SERVER_DOWN as e:
+                self.logger.info(f"LDAP connection failed, attempt {attempt+1}")
+                attempt += 1
+            time.sleep(3)
+        self.logger("Failed to connect to LDAP server!")
+        raise ldap.SERVER_DOWN("Failed to connect to LDAP server!")
 
     def __enter__(self):
         if not self.connection:

@@ -23,15 +23,23 @@ from app.extensions.common.label_extractor import LabelExtractor as labext
 from app.models import init_db
 from app.permissions import setup_permissions
 
-
 def _require_config(app, var_name):
     if (value := app.config.get(var_name)) is None:
         logging.error((msg := f"{var_name} environment variable cannot be empty"))
         raise ValueError(msg)
     return value
 
+def _if_not_exists_write(dest, content, conditional=True) -> None:
+    if not conditional or os.path.exists(dest):
+        return # Do nothing
+    parent = os.path.dirname(dest)
+    if not os.path.exists(parent):
+        print("MAKING PARENT", parent)
+        os.makedirs(parent)
+    with open(dest, "w+") as f:
+        f.write(content)
 
-def setup_config(app: Flask) -> None:
+def setup_app_config(app: Flask) -> None:
     for k, v in ENV_DEFAULTS.items():
         val = os.environ.get(k, v)
         if (parser := ENV_PARSING.get(k)):
@@ -48,13 +56,6 @@ def setup_config(app: Flask) -> None:
     app.config["TRUSTED_PROXY_IPS"] = [i.strip() for i in trusted_proxies_string.split(",")]
     if app.config.get("DEPOT_DEV_MODE"):
         app.config["DEPOT_DIR"] = app.config.get("DEPOT_DIR_DEV")
-    
-    if not os.path.exists("/docker/lostack-compose.yml"):
-        with open("/docker/lostack-compose.yml", "w+") as f:
-            f.write(app.config["DEFAULT_LOSTACK_COMPOSE"])
-        
-    if not os.path.exists("/docker/docker-compose.yml"):
-        raise FileNotFoundError("Could not locate docker-compose.yml, do you have /docker mounted properly?")
 
 def setup_logging(app: Flask) -> None:
     logging.basicConfig(
@@ -64,25 +65,75 @@ def setup_logging(app: Flask) -> None:
     )
     logging.config.dictConfig(app.config["LOG_CONFIG"])
 
+def setup_spew(app: Flask) -> None:
+    if app.config.get("DEBUG"):
+            logging.info(
+                "SYSTEM INFO:\n"
+                +json.dumps(
+                    {
+                        "OS": (platform.system(), platform.release(), platform.version()),
+                        "Python Version": sys.version,
+                        "Flask Version": flask_version,
+                    },
+                    indent=2
+                )
+            )
+
 def setup_media_folders(app: Flask) -> None:
-    if app.config.get("SETUP_MEDIA_FOLDERS"):
-        for subdir in app.config["MEDIA_FOLDERS"].split(","):
-            d = os.path.join("/media", subdir.strip())
-            if not os.path.exists(d):
-                app.logger.info(f"Creating media folder media/{subdir.strip()}")
-                os.makedirs(d, exist_ok=True)
-                os.chmod(d, 0o755)
+    if not app.config.get("FIRST_RUN_SETUP_MEDIA_FOLDERS"):
+        return
+    for subdir in app.config["MEDIA_FOLDERS"].split(","):
+        d = os.path.join("/media", subdir.strip())
+        if os.path.exists(d):
+            continue
+        app.logger.info(f"Creating media folder media/{subdir.strip()}")
+        os.makedirs(d, exist_ok=True)
+        os.chmod(d, 0o755)
+
+def setup_compose(app: Flask):
+    if not os.path.exists("/docker/docker-compose.yml"):
+        raise FileNotFoundError("Could not locate docker-compose.yml, do you have /docker mounted properly?")
+
+    if not os.path.exists("/docker/lostack-compose.yml"):
+        with open("/docker/lostack-compose.yml", "w+") as f:
+            f.write(app.config["DEFAULT_LOSTACK_COMPOSE"])
+
+def setup_authelia_config(app: Flask) -> None:
+    _if_not_exists_write(
+        "/config/authelia/configuration.yml",
+        app.config["DEFAULT_AUTHELIA_CONFIG"],
+        app.config.get("FIRST_RUN_CREATE_AUTHELIA_CONFIG")
+    )
+
+def setup_traefik_config(app: Flask) -> None:
+    _if_not_exists_write(
+        "/config/traefik/dynamic.yml",
+        app.config["DEFAULT_TRAEFIK_CONFIG"],
+        app.config.get("FIRST_RUN_CREATE_TRAEFIK_CONFIG")
+    )
+
+def setup_traefik_lostack_config(app: Flask):
+    _if_not_exists_write(
+        "/config/traefik/lostack-dynamic.yml",
+        "http:\n"
+    )
+
+def setup_coredns_config(app: Flask):
+    _if_not_exists_write(
+        "/config/coredns/resolv.conf",
+        app.config["DEFAULT_COREDNS_CONFIG"],
+        app.config.get("FIRST_RUN_CREATE_COREDNS_CONFIG")
+    )
 
 def setup_certificates(app: Flask):
-    if app.config["CREATE_SELF_SIGNED_CERT"]:
+    if app.config["FIRST_RUN_CREATE_SELF_SIGNED_CERT"]:
         if not check_certificates_exist(app.config["DOMAIN_NAME"], "/certs"):
             app.logger.info("Generating self-signed cert...")
             generate_certificates(app.config["DOMAIN_NAME"], "/certs", app.logger)
         else:
-            app.logger.info("Self-signed cert already exists")
+            app.logger.info("Cert already exists")
     else:
-        app.logger.info("Self-signed cert generation is disabled")
-
+        app.logger.info("Cert generation is disabled")
 
 def setup_user_login(app: Flask) -> None:
     def user_loader(user_id:int|str) -> "User":
@@ -95,6 +146,39 @@ def setup_user_login(app: Flask) -> None:
     def load_user(user_id):
         return user_loader(user_id)
 
+def setup_ldap(app: Flask) -> None:
+    app.ldap_manager = setup_ldap_manager(app)
+    app.ldap_manager.await_connection()
+    with app.ldap_manager:
+        initialized = True
+        try:
+            grps = app.ldap_manager.get_all_groups()
+        except ldap.NO_SUCH_OBJECT:
+            initialized = False
+        if not initialized: # Not set up
+            # Setup LDAP structure
+            if app.config.get("FIRST_RUN_SETUP_LDAP"):
+                app.ldap_manager.setup_ldap_structure()
+            else:
+                raise ValueError("FIRST_RUN_SETUP_LDAP set to false and LDAP not initialized")
+
+def setup_docker_manager(app: Flask) -> None:
+    app.docker_manager = DockerManagerStreaming(
+        (
+            "/docker/lostack-compose.yml",
+            "/docker/docker-compose.yml"
+        )
+    )
+
+def setup_docker_handler(app):
+    with app.app_context():
+        app.docker_handler = init_service_manager(app)
+        app.docker_manager.modified_callback = app.docker_handler.refresh
+
+def setup_and_init_db(app: Flask) -> None:
+    app.db = setup_db(app)
+    with app.app_context():
+        init_db(app)
 
 def setup_context_provider(app: Flask) -> None:
     @app.context_processor
@@ -131,67 +215,38 @@ def create_app(*args, **kw) -> Flask:
         **kw
     )
 
-    setup_config(app)    
+    setup_app_config(app)
     setup_logging(app)
-    if app.config.get("DEBUG"):
-        logging.info(
-            "SYSTEM INFO:\n"
-            +json.dumps(
-                {
-                    "OS": (platform.system(), platform.release(), platform.version()),
-                    "Python Version": sys.version,
-                    "Flask Version": flask_version,
-                },
-                indent=2
-            )
-        )
+    setup_spew(app)
     
-    setup_media_folders(app)
-    setup_certificates(app)
+    if app.config.get("FIRST_RUN"):
+        app.logger.info("Running first run tasks...")
+        setup_media_folders(app)
+        setup_compose(app)
+        setup_authelia_config(app)
+        setup_traefik_config(app)  
+        setup_traefik_lostack_config(app)
+        setup_coredns_config(app)
+        setup_certificates(app)
 
-    if not os.path.exists("/config/lostack-dynamic.yml"):
-        with open("/config/lostack-dynamic.yml", "w+") as f:
-            app.logger.info("Creating traefik dynamic config file")
-            f.write("http:\n") # Empty traefik config
-
-    app.ldap_manager = setup_ldap_manager(app)
-    with app.ldap_manager:
-        initialized = True
-        try:
-            grps = app.ldap_manager.get_all_groups()
-        except ldap.NO_SUCH_OBJECT:
-            initialized = False
-        if not initialized: # Not set up
-            # Setup LDAP structure
-            app.ldap_manager.setup_ldap_structure()
-                        
-
-    app.db = setup_db(app)
-    with app.app_context():
-        init_db(app)
-
-    app.docker_manager = DockerManagerStreaming(
-        (
-            "/docker/lostack-compose.yml",
-            "/docker/docker-compose.yml"
-        )
-    )
-
-    with app.app_context():
-        app.docker_handler = init_service_manager(app)
-        app.docker_manager.modified_callback = app.docker_handler.refresh
-
+    setup_ldap(app)
+    setup_and_init_db(app)
+    setup_docker_manager(app)
+    setup_docker_handler(app)
     setup_user_login(app)
     setup_permissions(app)
     setup_context_provider(app)
 
+    if app.config.get("FIRST_RUN"):
+        app.logger.info("First run setup completed successfully!")
+        sys.exit(0) # Don't start app on setup, exit happily
 
-    # Must be imported here 
+    # Must be imported here.
+    # Some blueprints need db to be initialized before importing.
     from app.blueprints import register_blueprints
     register_blueprints(app)
     
     return app
-
 
 if __name__ == '__main__':
     create_app().run(debug=True)

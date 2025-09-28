@@ -18,3 +18,4 @@ gunicorn
 python-ldap
 cssutils
 cryptography
+dnslib

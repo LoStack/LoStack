@@ -238,7 +238,7 @@ def _init_db(app):
 
         return yaml.dump(config, default_flow_style=False, sort_keys=False)
 
-    def save_traefik_config(filename="/config/lostack-dynamic.yml") -> bool:
+    def save_traefik_config(filename="/config/traefik/lostack-dynamic.yml") -> bool:
         """
         Export Traefik configuration and save to file
         Returns True if successful, False otherwise
