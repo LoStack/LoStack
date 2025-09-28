@@ -35,7 +35,7 @@
 
 {% macro service_item(service) %}
 <div class="service-item border-bottom">
-  <a href="{{ service.homepage_url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none d-block">
+  <a href="https://{{ service.name }}.{{ request.host.split('.', 1)[1]}}/" target="_blank" rel="noopener noreferrer" class="text-decoration-none d-block">
     <div class="d-flex align-items-center p-4 service-link">
       <div class="service-icon-wrapper me-3">
         <div class="service-icon d-flex align-items-center justify-content-center rounded"
