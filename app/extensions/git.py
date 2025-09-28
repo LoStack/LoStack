@@ -44,8 +44,10 @@ class RepoManager:
             work_dir=str(work_dir)
         )
 
-    def ensure_repo(self, result_queue:Queue) -> None:
+    def ensure_repo(self, result_queue:Queue=None) -> None:
         """Clone or update repo"""
+        if not result_queue:
+            result_queue = queue.Queue()
         if not self.repo_path.exists():
             result_queue.put_nowait(f"Cloning {self.repo_url} into {self.repo_path}")
             parent_dir = self.repo_path.parent
