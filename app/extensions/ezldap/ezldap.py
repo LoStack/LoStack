@@ -56,7 +56,7 @@ class LDAPManager:
             self.ldap_uri       = f"ldap://{self.ldap_host}:{self.ldap_port}"       
         
         # LDAP structure
-        self.ldap_domain        = conf("DOMAINNAME", "lostack.internal")
+        self.ldap_domain        = conf("DOMAIN_NAME", "lostack.internal")
         self.base_dn            = conf("LDAP_BASE_DN", f"dc={self.ldap_domain.replace('.', ',dc=')}")
         self.people_dn          = f"ou=people,{self.base_dn}"
         self.groups_dn          = f"ou=groups,{self.base_dn}"
