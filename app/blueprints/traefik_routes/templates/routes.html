@@ -125,7 +125,7 @@
 
 {% macro route_card(route) %}
 <div class="col-lg-6 col-xxl-4 mb-0">
-  <div class="card shadow route-card {% if not route.enabled %}route-disabled{% endif %}">
+  <div class="card shadow service-card {% if not route.enabled %}route-disabled{% endif %}">
     <div class="card-header
       {% if route.enabled %}
         bg-primary text-light
@@ -299,7 +299,7 @@ function toggleRoute(routeId) {
 function filterRoutes() {
   const searchInput = document.getElementById('Search');
   const searchTerm = searchInput.value.toLowerCase().trim();
-  const routeCards = document.querySelectorAll('.route-card');
+  const routeCards = document.querySelectorAll('.service-card');
   let visibleCount = 0;
 
   routeCards.forEach(card => {

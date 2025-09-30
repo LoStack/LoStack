@@ -59,16 +59,26 @@ This process is fairly simple, see the guide in the [LoStack-Depot](https://gith
 
 ## Automated Dashboard
 
-LoStack automatically generates a dashboard that only shows services a user has access to. Admin users will be shown all services, and only admins will be shown the management links in the navigation bar.
+LoStack automatically generates a dashboard that only shows the services a user has permission to access. Admin users will be shown all services, and only admins will be shown the management links in the navigation bar.
 
 ![LoStack Dashboard](docs/images/dashboard.png?raw=true "LoStack Dashboard")
 
 
 ## Service Management
 
-LoStacks revolves around the idea of "services," groups of Docker containers needed to support an endpoint. LoStack provides features to easily manage these groups with simple button presses.
+LoStack revolves around the idea of "services," groups of Docker containers needed to support an endpoint. LoStack provides features to easily manage these groups with simple button presses.
 
 ![LoStack Services](docs/images/services.png?raw=true "LoStack Services")
+
+
+## Easy Reverse Proxy Routing
+
+LoStack provides an easy way to handle basic Traefik routing. Routes appear on the automated dashboard based on group access controls (if enabled).
+
+![LoStack Routes](docs/images/routes.png?raw=true "Routing")
+
+![LoStack Routes](docs/images/route_editor.png?raw=true "Route Editor")
+
 
 ## Containers
 

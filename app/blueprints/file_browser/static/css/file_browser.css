@@ -26,6 +26,7 @@ html, body, .container-fluid, .content-wrapper, .row.h-100, .d-flex.flex-column.
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    height: 100vh;
 }
 
 .file-item {
@@ -158,4 +159,32 @@ html, body, .container-fluid, .content-wrapper, .row.h-100, .d-flex.flex-column.
 
 .modal-backdrop {
     background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive fixes for small screens */
+@media (max-width: 767px) {
+    .file-browser-container {
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .file-list-panel {
+        height: 50vh;
+        min-height: 300px;
+        border-right: none;
+        border-bottom: 2px solid var(--bs-dark);
+    }
+    
+    .file-viewer-panel {
+        height: 50vh;
+        min-height: 400px;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 991px) {
+    .file-list-panel,
+    .file-viewer-panel {
+        height: 100vh;
+    }
 }
