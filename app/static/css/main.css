@@ -14,7 +14,6 @@
 }
 
 .card {
-    /* border-radius: 0.25rem !important; */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -22,7 +21,6 @@
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-/* Sticky Sidebar */
 @media (min-width: 768px) {
     .sidebar {
         min-height: 100vh;
@@ -149,4 +147,21 @@
 
 .CodeMirror-scroll {
     outline-color: transparent;
+}
+
+.alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .alert-container {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
 }

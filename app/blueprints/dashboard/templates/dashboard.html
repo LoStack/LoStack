@@ -33,23 +33,25 @@
 </span>
 {% endmacro %}
 
-{% macro service_item(service) %}
+{% macro service_item(item) %}
 <div class="service-item border-bottom">
-  <a href="https://{{ service.name }}.{{ request.host.split('.', 1)[1]}}/" target="_blank" rel="noopener noreferrer" class="text-decoration-none d-block">
+  <a href="{{ item.homepage_url or 'https://' + item.name + '.' + request.host.split('.', 1)[1] + '/' }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none d-block">
     <div class="d-flex align-items-center p-4 service-link">
       <div class="service-icon-wrapper me-3">
         <div class="service-icon d-flex align-items-center justify-content-center rounded"
-          data-icon="{{ service.homepage_icon or service.name }}" style="width: 50px; height: 50px;">
+          data-icon="{{ item.homepage_icon or item.name }}" style="width: 50px; height: 50px;">
         </div>
       </div>
 
       <div class="flex-grow-1 min-width-0">
-        <h6 class="mb-1 fw-semibold">{{ service.homepage_name }}</h6>
-        <p class="mb-0 small">{{ service.homepage_description or 'No description available' }}</p>
+        <h6 class="mb-1 fw-semibold">{{ item.homepage_name }}</h6>
+        <p class="mb-0 small">{{ item.homepage_description or 'No description available' }}</p>
       </div>
 
       <div class="ms-3 d-flex align-items-center">
-        {{ status_badge(service.container_status) }}
+        {% if item.item_type == 'service' %}
+        {{ status_badge(item.container_status) }}
+        {% endif %}
         <i class="bi bi-box-arrow-up-right ms-2 " style="font-size: 0.8rem;"></i>
       </div>
     </div>
@@ -57,7 +59,7 @@
 </div>
 {% endmacro %}
 
-{% macro service_group_card(group_name, services) %}
+{% macro service_group_card(group_name, items) %}
 <div class="col-12 col-xl-6 mb-3">
   <div class="card border-0 shadow-sm h-100">
     <div class="card-header bg-primary border-0 py-3">
@@ -67,8 +69,8 @@
       </h5>
     </div>
     <div class="card-body p-0">
-      {% for service in services %}
-      {{ service_item(service) }}
+      {% for item in items %}
+      {{ service_item(item) }}
       {% endfor %}
     </div>
   </div>
@@ -97,8 +99,8 @@
   {{ empty_state() }}
   {% else %}
   <div class="row">
-    {% for group_name, services in service_groups.items() %}
-    {{ service_group_card(group_name, services) }}
+    {% for group_name, items in service_groups.items() %}
+    {{ service_group_card(group_name, items) }}
     {% endfor %}
   </div>
   {% endif %}

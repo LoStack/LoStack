@@ -104,8 +104,6 @@ def _init_db(app):
         session_duration = db.Column(db.String(10), nullable=False, default=app.config["AUTOSTART_DEFAULT_SESSION_DURATION"])
         # What name to show on the autostart loading screen
         display_name = db.Column(db.String(200), nullable=True)
-        # # Sablier loading theme
-        # theme = db.Column(db.String(50), nullable=False, default=app.config["SABLIER_DEFAULT_THEME"])
         # How often sablier loading screen retries connections
         refresh_frequency = db.Column(db.String(10), nullable=False, default=app.config["AUTOSTART_REFRESH_FREQUENCY"])
         # Show container details on Sablier loading screen
@@ -122,8 +120,10 @@ def _init_db(app):
         lostack_autoupdate_enabled = db.Column(db.Boolean, nullable=False, default=False)
         # Enables LoStack forward-auth for role checking
         lostack_access_enabled = db.Column(db.Boolean, nullable=False, default=True)
-        # Groups allowed to access end service
-        access_groups = db.Column(db.String(400), nullable=False, default=app.config["ADMIN_GROUP"])
+        # List of middlewares to add to traefik router
+        middlewares= db.Column(db.String(1024), nullable=True, default="")
+        # Ldap groups allowed to access end service
+        access_groups = db.Column(db.String(1024), nullable=False, default=app.config["ADMIN_GROUP"])
         # If service should be mounted to ${DOMAINNAME} - onle one service should have this 
         mount_to_root = db.Column(db.Boolean, nullable=False, default=False)
         # Homepage icon / icon path
@@ -139,7 +139,6 @@ def _init_db(app):
         # Last time accessed via auth middleware
         last_accessed = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-
         @property
         def display_name_or_name(self) -> str:
             """Return display_name if set, otherwise use name"""
@@ -152,6 +151,7 @@ def _init_db(app):
         @property
         def allowed_groups(self) -> list[str]:
             return [g.strip() for g in self.access_groups.split(",") if g.strip()]
+
 
     class ContainerSession(db.Model):
         """Tracks container sessions and usage by users"""
@@ -179,7 +179,7 @@ def _init_db(app):
             self.last_accessed = datetime.datetime.utcnow()
 
 
-    def export_sablier_config_to_yaml() -> str:
+    def export_services_config_to_file() -> str:
         """
         Export all enabled Sablier services to Traefik dynamic YAML format
         Returns the YAML string
@@ -231,6 +231,10 @@ def _init_db(app):
             )):
                 router_conf["middlewares"].append("lostack-middleware@docker")
             
+            if service.middlewares:
+                for middleware in service.middlewares.split(","):
+                    router_conf["middlewares"].append(middleware)
+            
             config["http"]["routers"][router_name] = router_conf
         
         if not config["http"]["middlewares"]:
@@ -244,7 +248,7 @@ def _init_db(app):
         Returns True if successful, False otherwise
         """
         try:
-            yaml_content = export_sablier_config_to_yaml()
+            yaml_content = export_services_config_to_file()
             with open(filename, 'w') as f:
                 f.write(yaml_content)
             return True
@@ -297,12 +301,11 @@ def _init_db(app):
     app.models = ImmutableDict()
     for obj in (
         User,
-        # SecretKey,
         LoStackDefaults,
         PackageEntry,
         ContainerSession,
         PERMISSION_ENUM,            
-        export_sablier_config_to_yaml,
+        export_services_config_to_file,
         get_permission_from_groups,
         save_traefik_config,
         update_defaults,

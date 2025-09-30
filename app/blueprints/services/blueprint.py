@@ -56,7 +56,6 @@ def register_blueprint(app:Flask) -> Blueprint:
         service = current_app.models.PackageEntry.query.get_or_404(service_id)
         form = PackageEntryForm()
         
-        # Populate group choices from LDAP
         try:
             all_groups = current_app.get_all_ldap_groups()
             form.access_groups.choices = [(group, group) for group in all_groups]
@@ -81,8 +80,8 @@ def register_blueprint(app:Flask) -> Blueprint:
             service.lostack_autostart_enabled = form.lostack_autostart_enabled.data
             service.lostack_autoupdate_enabled = form.lostack_autoupdate_enabled.data
             service.lostack_access_enabled = form.lostack_access_enabled.data
+            service.middlewares = form.middlewares.data
             
-            # Convert list back to comma-separated string
             if form.access_groups.data:
                 service.access_groups = ','.join(form.access_groups.data)
             else:
@@ -130,7 +129,7 @@ def register_blueprint(app:Flask) -> Blueprint:
     @bp.route("/action/<int:service_id>/toggle_access", methods=["POST"])
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def service_toggle_access_control(service_id):
-        """AJAX endpoint to toggle service enabled status"""
+        """AJAX endpoint to toggle service access control"""
         service = current_app.models.PackageEntry.query.get_or_404(service_id)
         
         try:
@@ -155,7 +154,7 @@ def register_blueprint(app:Flask) -> Blueprint:
     @bp.route("/action/<int:service_id>/toggle_autostart", methods=["POST"])
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def service_toggle_autostart(service_id):
-        """AJAX endpoint to toggle service enabled status"""
+        """AJAX endpoint to toggle service autostart"""
         service = current_app.models.PackageEntry.query.get_or_404(service_id)
         
         try:
@@ -180,7 +179,7 @@ def register_blueprint(app:Flask) -> Blueprint:
     @bp.route("/action/<int:service_id>/toggle_autoupdate", methods=["POST"])
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def service_toggle_autoupdate(service_id):
-        """AJAX endpoint to toggle service enabled status"""
+        """AJAX endpoint to toggle service autoupdate"""
         service = current_app.models.PackageEntry.query.get_or_404(service_id)
         
         try:

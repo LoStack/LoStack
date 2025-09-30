@@ -39,7 +39,8 @@ def register_blueprint(app:Flask) -> Blueprint:
         
         # Get all installed packages
         installed_packages = current_app.models.PackageEntry.query.all()
-        
+
+        all_routes = current_app.models.Route.query.all()        
         logger.info(f"Installed packages {installed_packages}")
 
         user_groups = g.groups
@@ -49,13 +50,18 @@ def register_blueprint(app:Flask) -> Blueprint:
         # Filter packages based on user access
         if "admins" in user_groups:
             allowed_packages = installed_packages
+            allowed_routes = all_routes
         else:
             allowed_packages = []
             for package in installed_packages:
-                # Parse access_groups string to list
                 package_groups = [g.strip() for g in package.access_groups.split(',') if g.strip()]
                 if check_user_access(user_groups, package_groups):
                     allowed_packages.append(package)
+            allowed_routes = []
+            for route in all_routes:
+                route_groups = [g.strip() for g in route.access_groups.split(',') if g.strip()]
+                if check_user_access(user_groups, route_groups):
+                    allowed_routes.append(route)
         
         logger.info(f"Showing dashboard with allowed packages {allowed_packages}")
 
@@ -76,24 +82,20 @@ def register_blueprint(app:Flask) -> Blueprint:
                     'homepage_url': package.homepage_url.replace('${service}', package.name),
                     'homepage_group': package.homepage_group,
                     'container_status': 'unknown',
-                    'exit_code': None
+                    'exit_code': None,
+                    'item_type': 'service'
                 }
                 
-                # Get service names (stored as comma-separated string)
                 service_names = [s.strip() for s in package.service_names.split(',') if s.strip()]
                 
-                # Check container status and extract Docker labels if running
                 running_containers = []
                 for service_name in service_names:
                     try:
                         container = docker_client.containers.get(service_name)
                         running_containers.append(container)
-                        
-                        # Extract container status and exit code
                         container_state = container.attrs['State']
                         status = container.status.lower()
                         
-                        # Map Docker status to our status names
                         if status == 'running':
                             if container_state.get('Health', {}).get('Status') == 'healthy':
                                 service_data['container_status'] = 'healthy'
@@ -115,11 +117,8 @@ def register_blueprint(app:Flask) -> Blueprint:
                         else:
                             service_data['container_status'] = status
                         
-                        # If container is running, extract homepage labels from Docker
                         if container.status == 'running':
                             labels = container.labels
-                            
-                            # Update service data with Docker labels if they exist
                             if 'homepage.name' in labels:
                                 service_data['homepage_name'] = labels['homepage.name']
                             if 'homepage.icon' in labels:
@@ -130,8 +129,7 @@ def register_blueprint(app:Flask) -> Blueprint:
                                 service_data['homepage_group'] = labels['homepage.group']
                             if 'homepage.url' in labels:
                                 service_data['homepage_url'] = labels['homepage.url']
-                                
-                            break  # Use the first running container's labels
+                            break
                             
                     except docker.errors.NotFound:
                         continue
@@ -150,7 +148,7 @@ def register_blueprint(app:Flask) -> Blueprint:
                             # Check lostack compose file
                             compose_handler = current_app.docker_handler.compose_file_handlers("/docker/lostack-compose.yml")
                         
-                        # Extract labels from compose file
+                        # Extract labels
                         for service_name in service_names:
                             service_config = compose_handler.get_service_data(service_name)
                             if service_config and 'labels' in service_config:
@@ -208,10 +206,36 @@ def register_blueprint(app:Flask) -> Blueprint:
                 logger.error(f"Error processing package {package.name}: {e}")
                 continue
         
-        # Sort groups and services within groups
+        for route in allowed_routes:
+            try:
+                if not route.enabled:
+                    continue
+                    
+                if route.custom_rule:
+                    route_url = f"https://{route.prefix}.{current_app.config.get('DOMAIN_NAME', 'lostack.internal')}/"
+                else:
+                    route_url = f"https://{route.prefix}.{current_app.config.get('DOMAIN_NAME', 'lostack.internal')}/"
+                
+                route_data = {
+                    'name': route.prefix,
+                    'homepage_name': route.homepage_name,
+                    'homepage_icon': route.homepage_icon,
+                    'homepage_description': route.homepage_description,
+                    'homepage_url': route_url,
+                    'homepage_group': route.homepage_group,
+                    'item_type': 'route'
+                }
+                
+                service_groups[route_data['homepage_group']].append(route_data)
+                
+            except Exception as e:
+                logger.error(f"Error processing route {route.name}: {e}")
+                continue
+        
         sorted_groups = dict(sorted(service_groups.items()))
         for group_name in sorted_groups:
             sorted_groups[group_name].sort(key=lambda x: x['homepage_name'].lower())
 
         return render_template("dashboard.html", service_groups=sorted_groups)
+    
     app.register_blueprint(bp)

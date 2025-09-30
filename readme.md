@@ -134,7 +134,7 @@ It currently only has support for text-file editing, and lacks features for crea
 - **[CodeMirror 5](https://github.com/codemirror/codemirror5)** [MIT]
 - **[Homarr Icons](https://github.com/homarr-labs/dashboard-icons)** [Apache 2]
 - **[JS-YAML](https://www.npmjs.com/package/js-yaml)** [MIT]
-- **[Pictogrammers Material Design Icons]()** [[Pictogrammers Free License + MIT](https://pictogrammers.com/docs/general/license/)]
+- **[Pictogrammers Material Design Icons](https://pictogrammers.com/library/mdi/)** [[Pictogrammers Free License + MIT](https://pictogrammers.com/docs/general/license/)]
 
 ### LoStack Backend
 - **[Flask](https://flask.palletsprojects.com/en/stable/)** [BSD-3]

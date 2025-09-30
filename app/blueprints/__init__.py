@@ -6,6 +6,7 @@ from .depot import register_blueprint as register_depot_blueprint
 from .ldap import register_blueprint as register_ldap_blueprint
 from .services import register_blueprint as register_services_blueprint
 from .settings import register_blueprint as register_settings_blueprint
+from .traefik_routes import register_blueprint as register_traefik_routes_blueprint
 from .user import register_blueprint as register_user_blueprint 
 
 def register_blueprints(app):
@@ -16,6 +17,7 @@ def register_blueprints(app):
         register_dashboard_blueprint,
         register_depot_blueprint,
         register_ldap_blueprint,
+        register_traefik_routes_blueprint,
         register_services_blueprint,
         register_settings_blueprint,
         register_user_blueprint

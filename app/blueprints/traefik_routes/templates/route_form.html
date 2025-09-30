@@ -1,14 +1,13 @@
 {% extends "core.html" %}
 
-{% block title %}{{ action }} Service - LoStack Admin{% endblock %}
+{% block title %}{{ action }} Route - LoStack Admin{% endblock %}
 
-{% block page_title %}<i class="bi bi-{% if action == 'Edit' %}gear{% else %}plus-circle{% endif %} me-2"></i>{{ action
-}} Service{% endblock %}
+{% block page_title %}<i class="bi bi-{% if action == 'Edit' %}gear{% else %}plus-circle{% endif %} me-2"></i>{{ action }} Route{% endblock %}
 
 {% block nav_actions %}
 <div class="btn-group">
-  <a href="{{ url_for('services.services') }}" class="btn btn-outline-light">
-    <i class="bi bi-arrow-left me-1"></i> Back to Services
+  <a href="{{ url_for('traefik_routes.routes') }}" class="btn btn-outline-light">
+    <i class="bi bi-arrow-left me-1"></i> Back to Routes
   </a>
 </div>
 {% endblock %}
@@ -72,17 +71,25 @@
 
   <div class="row">
     <div class="col-lg-8 mb-3">
-      {{ render_card("Service Configuration") }}
+      {{ render_card("Route Configuration") }}
       <div class="row mb-3">
         {{ render_field(form.enabled, field_type="switch", col_class="col-12") }}
       </div>
       {{ end_card() }}
 
       <div class="mt-3">
-        {{ render_card("Traefik Configuration") }}
+        {{ render_card("Basic Configuration") }}
         <div class="row mb-3">
           {{ render_field(form.name) }}
+          {{ render_field(form.prefix) }}
+        </div>
+        <div class="row mb-3">
+          {{ render_field(form.host) }}
           {{ render_field(form.port) }}
+        </div>
+        <div class="row mb-3">
+          {{ render_field(form.use_https, field_type="switch") }}
+          {{ render_field(form.use_insecure_transport, field_type="switch") }}
         </div>
         <div class="row mb-3">
           {{ render_field(form.middlewares, col_class="col-12") }}
@@ -91,20 +98,14 @@
       </div>
 
       <div class="mt-3">
-        {{ render_card("Autostart Configuration") }}
+        {{ render_card("Dashboard Configuration") }}
         <div class="row mb-3">
-          {{ render_field(form.lostack_autostart_enabled, field_type="switch") }}
-          {{ render_field(form.show_details, field_type="switch") }}
+          {{ render_field(form.homepage_name) }}
+          {{ render_field(form.homepage_icon) }}
         </div>
-
         <div class="row mb-3">
-          {{ render_field(form.service_names, col_class="col-12") }}
-        </div>
-
-        <div class="row mb-3">
-          {{ render_field(form.session_duration, col_class="col-md-6") }}
-          {{ render_field(form.refresh_frequency, col_class="col-md-6") }}
-          <!-- {{ render_field(form.lostack_autoupdate_enabled, field_type="switch", col_class="col-md-6") }} -->
+          {{ render_field(form.homepage_group) }}
+          {{ render_field(form.homepage_description) }}
         </div>
         {{ end_card() }}
       </div>
@@ -151,7 +152,7 @@
           Cancel
         </button>
         <button type="submit" class="btn btn-success">
-          <i class="bi bi-check-lg me-1"></i> {{ action }} Service
+          <i class="bi bi-check-lg me-1"></i> {{ action }} Route
         </button>
       </div>
     </div>
@@ -160,5 +161,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('services.static', filename='js/service_form.js' ) }}"></script>
+<script src="{{ url_for('traefik_routes.static', filename='js/route_form.js' ) }}"></script>
 {% endblock %}

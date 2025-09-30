@@ -93,37 +93,6 @@ def setup_compose(app: Flask):
     if not os.path.exists("/docker/docker-compose.yml"):
         raise FileNotFoundError("Could not locate docker-compose.yml, do you have /docker mounted properly?")
 
-    if not os.path.exists("/docker/lostack-compose.yml"):
-        with open("/docker/lostack-compose.yml", "w+") as f:
-            f.write(app.config["DEFAULT_LOSTACK_COMPOSE"])
-
-def setup_authelia_config(app: Flask) -> None:
-    _if_not_exists_write(
-        "/config/authelia/configuration.yml",
-        app.config["DEFAULT_AUTHELIA_CONFIG"],
-        app.config.get("FIRST_RUN_CREATE_AUTHELIA_CONFIG")
-    )
-
-def setup_traefik_config(app: Flask) -> None:
-    _if_not_exists_write(
-        "/config/traefik/dynamic.yml",
-        app.config["DEFAULT_TRAEFIK_CONFIG"],
-        app.config.get("FIRST_RUN_CREATE_TRAEFIK_CONFIG")
-    )
-
-def setup_traefik_lostack_config(app: Flask):
-    _if_not_exists_write(
-        "/config/traefik/lostack-dynamic.yml",
-        "http:\n"
-    )
-
-def setup_coredns_config(app: Flask):
-    _if_not_exists_write(
-        "/config/coredns/resolv.conf",
-        app.config["DEFAULT_COREDNS_CONFIG"],
-        app.config.get("FIRST_RUN_CREATE_COREDNS_CONFIG")
-    )
-
 def setup_certificates(app: Flask):
     if app.config["FIRST_RUN_CREATE_SELF_SIGNED_CERT"]:
         if not check_certificates_exist(app.config["DOMAIN_NAME"], "/certs"):
@@ -174,6 +143,48 @@ def setup_docker_handler(app):
         app.docker_handler = init_service_manager(app)
         app.docker_manager.modified_callback = app.docker_handler.refresh
 
+def handle_first_run(app):
+    # Config file creation
+    config_files = (
+        ( # User-managed Traefik dynamic config file
+            "/config/traefik/dynamic.yml",
+            app.config["DEFAULT_TRAEFIK_CONFIG"],
+            app.config.get("FIRST_RUN_CREATE_TRAEFIK_CONFIG")
+        ),
+        ( # Auto-generated LoStack Service Traefik dynamic config file
+            "/config/traefik/lostack-dynamic.yml",
+            "http:\n",
+            True
+        ),
+        ( # Auto-generated LoStack Routes Traefik dynamic config file
+            "/config/traefik/lostack-routes-dynamic.yml",
+            "http:\n",
+            True
+        ),
+        ( # User-managed Authelia static configuration file
+            "/config/authelia/configuration.yml",
+            app.config["DEFAULT_AUTHELIA_CONFIG"],
+            app.config.get("FIRST_RUN_CREATE_AUTHELIA_CONFIG")
+        ),
+        ( # LoStack-managed, with used-edits, LoStack Service compose file
+            "/docker/lostack-compose.yml",
+            app.config["DEFAULT_LOSTACK_COMPOSE"],
+            True
+        ),
+        ( # Static CoreDNS config file
+            "/config/coredns/resolv.conf",
+            app.config["DEFAULT_COREDNS_CONFIG"],
+            app.config.get("FIRST_RUN_CREATE_COREDNS_CONFIG")
+        )
+    )
+
+    for args in config_files:
+        _if_not_exists_write(*args)
+
+    setup_media_folders(app)
+    setup_compose(app)
+    setup_certificates(app)
+
 def setup_and_init_db(app: Flask) -> None:
     app.db = setup_db(app)
     with app.app_context():
@@ -220,13 +231,7 @@ def create_app(*args, **kw) -> Flask:
     
     if app.config.get("FIRST_RUN"):
         app.logger.info("Running first run tasks...")
-        setup_media_folders(app)
-        setup_compose(app)
-        setup_authelia_config(app)
-        setup_traefik_config(app)  
-        setup_traefik_lostack_config(app)
-        setup_coredns_config(app)
-        setup_certificates(app)
+        handle_first_run(app)
 
     setup_ldap(app)
     setup_and_init_db(app)

@@ -1,0 +1,400 @@
+{% from 'macros/summary_panel.html' import summary_panel %}
+{% from 'macros/search_bar.html' import search_bar %}
+{% extends "core.html" %}
+
+{% block title %}Routes - LoStack Admin{% endblock %}
+{% block page_title %}
+<i class="bi bi-signpost-split-fill me-2"></i>LoStack Routes
+{% endblock %}
+
+{% block nav_actions %}
+<a href="{{ url_for('traefik_routes.route_new') }}" class="btn btn-sm btn-outline-light">
+  <i class="bi bi-plus-circle me-1"></i>
+  Add New Route
+</a>
+{% endblock %}
+
+{% macro render_routing_info(route, request) %}
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-0">
+    <h6 class="small fw-bold text-muted mb-1">
+      <i class="bi bi-signpost-split-fill me-1 text-secondary"></i>Routing
+    </h6>
+    <div class="small d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('traefik_routes.route_edit', route_id=route.id) }}"
+        class="btn btn-sm btn-outline-primary btn-action py-0 px-3" title="Edit Route">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <button class="btn btn-sm btn-outline-danger btn-action py-0 px-3" 
+        onclick="showDeleteConfirmation({{ route.id }}, '{{ route.name }}', '{{ url_for('traefik_routes.route_delete', route_id=route.id) }}')"
+        title="Delete Route"
+      >
+        <i class="bi bi-trash3"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-{{ 'success' if route.enabled else 'secondary' }} btn-action py-0 px-2"
+        onclick="toggleRoute({{ route.id }})"
+        title="{{ 'Disable' if route.enabled else 'Enable' }} Traefik routing"
+        style="min-width: 60px;">
+        <i class="bi bi-{{ 'toggle-on' if route.enabled else 'toggle-off' }} me-1"></i>
+        {{ 'On' if route.enabled else 'Off' }}
+      </button>
+    </div>
+  </div>
+  <div class="small mb-0">
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-signpost me-2 text-secondary"></i>
+      <code class="small item-break">
+        <a href="https://{{ route.prefix }}.{{ request.host.split('.', 1)[1]}}/" target="_blank" class="text-decoration-none item-break">
+          https://{{ route.prefix }}.{{ request.host.split('.', 1)[1]}}/
+          <i class="bi bi-box-arrow-up-right ms-1"></i>
+        </a>
+      </code>
+      <i class="bi bi-arrow-right mx-2"></i>
+      <code class="item-break">{{ route.host }}:{{ route.port }}</code>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_access(route) %}
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-0 mt-3">
+    <h6 class="small fw-bold text-muted mb-1">
+      <i class="bi bi-stoplights-fill me-1 text-secondary"></i>Access Control
+    </h6>
+    <div class="small d-flex gap-2 flex-wrap">
+      <span class="badge rounded-pill bg-{{ 'success' if route.lostack_access_enabled else 'secondary' }}">
+        <i class="bi bi-{{ 'shield-check' if route.lostack_access_enabled else 'shield-x' }} me-1"></i>
+        {{ 'Enabled' if route.lostack_access_enabled else 'Disabled' }}
+      </span>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_transport(route) %}
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-0 mt-3">
+    <h6 class="small fw-bold text-muted mb-1">
+      <i class="bi bi-shield-lock-fill me-1 text-secondary"></i>Transport
+    </h6>
+  </div>
+  <div class="small ms-2 me-0 mb-0">
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-{{ 'lock-fill' if route.use_https else 'unlock-fill' }} me-2 text-secondary"></i>
+      <code class="text-primary item-break">Protocol:</code>&nbsp;
+      <code class="small item-break">{{ 'HTTPS' if route.use_https else 'HTTP' }}</code>
+    </div>
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-{{ 'shield-slash' if route.use_insecure_transport else 'shield-check' }} me-2 text-secondary"></i>
+      <code class="text-primary item-break">Insecure Transport:</code>&nbsp;
+      <code class="small item-break">{{ 'Enabled' if route.use_insecure_transport else 'Disabled' }}</code>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_homepage(route) %}
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-0 mt-3">
+    <h6 class="small fw-bold text-muted mb-1">
+      <i class="bi bi-house-fill me-1 text-secondary"></i>Homepage
+    </h6>
+  </div>
+  <div class="small ms-2 me-0 mb-0">
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-tag me-2 text-secondary"></i>
+      <code class="text-primary item-break">Name:</code>&nbsp;
+      <code class="small item-break">{{ route.homepage_name }}</code>
+    </div>
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-collection me-2 text-secondary"></i>
+      <code class="text-primary item-break">Group:</code>&nbsp;
+      <code class="small item-break">{{ route.homepage_group }}</code>
+    </div>
+    {% if route.homepage_description %}
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-info-circle me-2 text-secondary"></i>
+      <code class="text-primary item-break">Description:</code>&nbsp;
+      <code class="small item-break">{{ route.homepage_description }}</code>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro route_card(route) %}
+<div class="col-lg-6 col-xxl-4 mb-0">
+  <div class="card shadow route-card {% if not route.enabled %}route-disabled{% endif %}">
+    <div class="card-header
+      {% if route.enabled %}
+        bg-primary text-light
+      {% else %}
+        bg-dark text-light
+      {% endif %}"
+    >
+      <div class="d-flex justify-content-between align-items-start">
+        
+        <div class="d-flex flex-column">
+          <h6 class="fw-semibold mb-0">
+            {{ route.name }}
+          </h6>
+
+          <div class="route-status mt-1">
+            <span class="badge rounded-pill bg-{{ 'success' if route.enabled else 'secondary' }} py-1 px-2">
+              <i class="bi bi-{{ 'check-circle' if route.enabled else 'x-circle' }} me-1"></i>
+              {{ 'Active' if route.enabled else 'Disabled' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="dashboard-icon d-flex align-items-center justify-content-center rounded" 
+          data-icon="{{ route.homepage_icon }}" 
+          style="width: 50px; height: 50px;">
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body px-0 py-0">
+      <div class="mx-2 mt-2 mb-2">
+        {{ render_routing_info(route, request) }}
+        {{ render_access(route) }}
+        {{ render_transport(route) }}
+        {{ render_homepage(route) }}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-0">
+      <div class="flex-grow-1">
+        {{ summary_panel([
+          {'value': routes|selectattr("enabled")|list|length,'label': 'Active Routes','icon': 'check-circle','bg_class': 'bg-primary'},
+          {'value': routes|rejectattr("enabled")|list|length,'label': 'Disabled','icon': 'list-ul','bg_class': 'bg-light', 'text_class': 'text-dark'},
+          {'value': routes|length,'label': 'Total','icon': 'x-circle','bg_class': 'bg-dark','text_class': 'text-light'}
+        ]) }}
+      </div>
+    </div>
+
+    {% if routes %}
+    {{ search_bar("Search routes by name") }}
+    <div class="row g-3 mb-5">
+      {% for route in routes %}
+        {{ route_card(route) }}
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+      <div class="card">
+        <div class="card-body py-5">
+          <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+          <h4 class="text-muted mb-3">No Routes Configured</h4>
+          <p class="text-muted mb-4">
+            Create a new route to configure Traefik routing for your services
+          </p>
+          <a href="{{ url_for('traefik_routes.route_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add New Route
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="deleteRouteModal" tabindex="-1" aria-labelledby="deleteRouteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteRouteModalLabel">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+          Confirm Route Deletion
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Are you sure you want to delete this route?</strong></p>
+        <p class="mb-3">Deleting a route will:</p>
+        <ol class="mb-0">
+          <li>Remove the route from the LoStack database</li>
+          <li>Remove the router, middleware, and service from the dynamic Traefik config</li>
+          <li>Make the service inaccessible via this route</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i>
+          Yes, Delete Route
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showDeleteConfirmation(routeId, routeName, deleteUrl) {
+  const modal = new bootstrap.Modal(document.getElementById('deleteRouteModal'));
+  const confirmBtn = document.getElementById('confirmDeleteBtn');
+  
+  document.querySelector('#deleteRouteModal .modal-body strong').textContent = 
+    `Are you sure you want to delete the route "${routeName}"?`;
+  
+  confirmBtn.onclick = function() {
+    fetch(deleteUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        modal.hide();
+        location.reload();
+      } else {
+        alert('Error deleting route: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error deleting route');
+    });
+  };
+  
+  modal.show();
+}
+
+function toggleRoute(routeId) {
+  fetch(`/routes/action/${routeId}/toggle`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error toggling route: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error toggling route');
+  });
+}
+
+function filterRoutes() {
+  const searchInput = document.getElementById('Search');
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const routeCards = document.querySelectorAll('.route-card');
+  let visibleCount = 0;
+
+  routeCards.forEach(card => {
+    const cardContainer = card.closest('.col-lg-6, .col-xxl-4');
+    const routeNameElement = card.querySelector('.card-header h6.fw-semibold');
+
+    if (routeNameElement) {
+      const routeName = routeNameElement.textContent.toLowerCase().trim();
+      const shouldShow = searchTerm === '' || routeName.includes(searchTerm);
+
+      if (shouldShow) {
+        cardContainer.style.display = '';
+        visibleCount++;
+      } else {
+        cardContainer.style.display = 'none';
+      }
+    }
+  });
+
+  updateEmptyState(visibleCount);
+}
+
+function updateEmptyState(visibleCount) {
+  const existingMessage = document.getElementById('no-results-message');
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+
+  const searchInput = document.getElementById('Search');
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  
+  if (searchTerm && visibleCount === 0) {
+    const routesContainer = document.querySelector('.row.g-3.mb-5');
+    if (routesContainer) {
+      const noResultsHtml = `
+        <div id="no-results-message" class="col-12">
+          <div class="text-center py-5">
+            <div class="card">
+              <div class="card-body py-5">
+                <i class="bi bi-search display-1 text-muted mb-3"></i>
+                <h4 class="text-muted mb-3">No Routes Found</h4>
+                <p class="text-muted mb-4">
+                  No routes match your search for "<strong>${escapeHtml(searchInput.value)}</strong>"
+                </p>
+                <button class="btn btn-outline-primary" onclick="clearSearch()">
+                  <i class="bi bi-x-circle me-1"></i>
+                  Clear Search
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      routesContainer.insertAdjacentHTML('beforeend', noResultsHtml);
+    }
+  }
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('Search');
+  searchInput.value = '';
+  filterRoutes();
+  searchInput.focus();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function initializeSearch() {
+  const searchInput = document.getElementById('Search');
+  if (!searchInput) return;
+  
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.activeElement === searchInput) {
+      clearSearch();
+    }
+  });
+      
+  let searchTimeout;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(filterRoutes, 50);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initializeSearch();
+  document.querySelectorAll('.dashboard-icon').forEach(function(iconContainer) {
+    const iconName = iconContainer.getAttribute('data-icon');
+    const iconElement = createServiceIcon(iconName, 50);
+    iconContainer.appendChild(iconElement);
+  });
+});
+</script>
+{% endblock %}

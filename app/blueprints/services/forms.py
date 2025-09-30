@@ -49,7 +49,7 @@ class PackageEntryForm(FlaskForm):
             "placeholder": "my-service",
             "class": "form-control"
         },
-        description="Unique service name"
+        description="Unique service name, must match Docker container"
     )
 
     service_names = StringField(
@@ -132,7 +132,7 @@ class PackageEntryForm(FlaskForm):
     show_details = BooleanField(
         'Show Details',
         render_kw={"class": "form-check-input"},
-        description="Show service details on the loading page"
+        description="Show loading details on the loading page"
     )
     
     enabled = BooleanField(
@@ -170,8 +170,15 @@ class PackageEntryForm(FlaskForm):
         description=""
     )
 
-    
-    
+    middlewares = StringField(
+        'Middlewares',
+        render_kw={
+            "placeholder": "my-service",
+            "class": "form-control"
+        },
+        description="Comma-separated list of Traefik Middleware. Do not add lostack-middleware to this field."
+    )
+
     submit = SubmitField(
         'Save Service',
         render_kw={"class": "btn btn-primary"}
@@ -215,6 +222,7 @@ def populate_package_entry_form(form, service, all_groups):
     form.lostack_autostart_enabled.data = service.lostack_autostart_enabled
     form.lostack_autoupdate_enabled.data = service.lostack_autoupdate_enabled
     form.lostack_access_enabled.data = service.lostack_access_enabled
+    form.middlewares.data = service.middlewares
     
     if service.access_groups:
         form.access_groups.data = service.allowed_groups

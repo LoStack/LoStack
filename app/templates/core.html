@@ -82,6 +82,11 @@
                                 <i class="bi bi-rocket-takeoff me-2"></i> Services
                             </a>
 
+                            <a class="nav-link text-light {% if request.endpoint.startswith('traefik_routes') %}active{% endif %}" 
+                            href="{{ url_for('traefik_routes.routes') }}">
+                                <i class="bi bi-cone-striped me-2"></i> Routing
+                            </a>
+
                             <a class="nav-link text-light {% if request.endpoint == 'containers.containers' %}active{% endif %}" 
                             href="{{ url_for('containers.containers') }}">
                                 <i class="bi bi-boxes me-2"></i> Containers
@@ -154,24 +159,26 @@
                 </nav>
                 {% endif %}
 
-                <div class="p-4 py-0 px-0">
-                    {# <!-- Flash Messages --> #}
-                    {# <!-- TODO: make hovering errors, this moves the page currently --> #}
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
+                {# <!-- Flashed Messages --> #}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="alert-container">
                             {% for category, message in messages %}
                                 <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                    <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'error' or category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                                    <i class=" me-2 bi bi-{% if category == 'success' %}check-circle{% elif category == 'error' or category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
                             {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
+                <div class="p-4 py-0 px-0">
                     {# <!-- Page Content --> #}
                     {% block content %}{% endblock %}
                 </div>
+
             </div>
         </div>
     </div>
