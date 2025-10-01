@@ -46,8 +46,13 @@ class SessionManager:
     """
     Handles LoStack autostart/stop sessions
     """
-    def __init__(self, app, json_file='/config/sessions.json', update_interval=10):
+    def __init__(self, app, json_file='/config/lostack/sessions.json', update_interval=10):
         self.app = app
+
+        parent = os.path.exists(os.path.dirname(json_file))
+        if not os.path.exists(parent):
+            os.makedirs(parent, exist_ok=True)
+
         self.json_file = json_file
         self.update_interval = update_interval
         self.logger = app.logger
