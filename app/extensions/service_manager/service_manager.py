@@ -29,6 +29,8 @@ class ServiceManager:
         self.refresh()
 
     def refresh(self, event=None) -> None:
+        if self.app.config.get("FIRST_RUN"):
+            return # Don't register container on first run
         try:
             # CURRENT_APP WILL NOT WORK HERE | Proxy expires before this is reached due to threading
             with self.app.app_context():
@@ -99,6 +101,10 @@ class ServiceManager:
         homepage_group = labels.get('homepage.group', None)
         homepage_description = labels.get('homepage.description', None)
         homepage_url = labels.get('homepage.href', "https://"+group_name+"."+current_app.config.get("DOMAIN_NAME"))
+        force_disable_autostart = labext.parse_boolean(labels.get('lostack.force_disable_autostart','false'))
+        force_disable_access_control = labext.parse_boolean(labels.get('lostack.force_disable_access_control','false'))
+        force_disable_autoupdate = labext.parse_boolean(labels.get('lostack.force_disable_autoupdate','false'))
+        force_compose_edit = labext.parse_boolean(labels.get('lostack.force_compose_edit','false'))
 
         service = current_app.models.PackageEntry(
             name=group_name,
@@ -115,11 +121,15 @@ class ServiceManager:
             automatic=True,
             core_service=core_service,
             mount_to_root=mount_to_root,
-            homepage_icon=homepage_icon,
-            homepage_name=homepage_name,
-            homepage_group=homepage_group,
+            homepage_icon=homepage_icon or "",
+            homepage_name=homepage_name or group_name,
+            homepage_group=homepage_group or "Apps",
             homepage_description=homepage_description,
-            homepage_url=homepage_url
+            homepage_url=homepage_url,
+            force_disable_autostart = force_disable_autostart,
+            force_disable_access_control = force_disable_access_control,
+            force_disable_autoupdate = force_disable_autoupdate,
+            force_compose_edit = force_compose_edit,
         )
         
         current_app.db.session.add(service)

@@ -157,7 +157,6 @@ def setup_secrets(app):
         with open(file, "r") as f:
             app.config[conf_name] = f.read()
     app.secret_key = app.config["SECRET_KEY"]
-    app.logger.info(app.secret_key)
 
 def handle_first_run(app):
     # Config file creation
@@ -249,7 +248,6 @@ def setup_context_provider(app: Flask) -> None:
 
 
 def create_app(*args, **kw) -> Flask:
-    print(args)
     app = Flask(
         __name__,
         static_folder='static', 

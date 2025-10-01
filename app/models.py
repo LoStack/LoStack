@@ -138,6 +138,14 @@ def _init_db(app):
         homepage_url = db.Column(db.String(100), unique=False, nullable=False, default="${service}."+app.config["DOMAIN_NAME"])
         # Last time accessed via auth middleware
         last_accessed = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+        # Disable service autostart in GUI and Middleware
+        force_disable_autostart = db.Column(db.Boolean, nullable=False, default=False)
+        # Disable service access control in GUI and Middleware
+        force_disable_access_control = db.Column(db.Boolean, nullable=False, default=False)
+        # Disable service autoupdate in GUI and Middleware
+        force_disable_autoupdate = db.Column(db.Boolean, nullable=False, default=False)
+        # Disable editing in GUI
+        force_compose_edit = db.Column(db.Boolean, nullable=False, default=False)
 
         @property
         def display_name_or_name(self) -> str:
@@ -273,7 +281,7 @@ def _init_db(app):
     logging.info("Initializing db...")
     db.create_all(bind_key="lostack-db")
     if not User.query.get(1):
-        logging.info("Creating default user with id=1")
+        logging.info("Creating default (admin) user with id=1")
         user = User(id=1, name=app.config.get("LDAP_ADMIN_USERNAME"), permission_integer=PERMISSION_ENUM.ADMIN)
         db.session.add(user)
         db.session.commit()
