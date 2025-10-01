@@ -464,8 +464,19 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to get container info: {e}")
             return None
+        
+        if not info:
+            self.logger.error("Failed to get container info!")
+            return None
 
-        to_start = [name for name, data in info.items() if data.get("State") != "running"]
+        print(info)
+        to_start = []
+        for name, data in info.items():
+            if not data:
+                self.logger.warning(f"Failed to get container data for {name}")
+                continue
+            if not data.get("State") == "running":
+                to_start.append(name)
 
         try:
             for container in container_names:

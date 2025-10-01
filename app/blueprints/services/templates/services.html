@@ -67,13 +67,15 @@ LoStack Services
       <i class="bi bi-stoplights-fill me-1 text-secondary"></i>Access Control
     </h6>
     <div class="small d-flex gap-2 flex-wrap">
-      <button class="btn btn-sm btn-outline-{{ 'success' if service.lostack_access_enabled else 'secondary' }} btn-action py-0 px-2"
+      {% if not service.name == "lostack" %}
+        <button class="btn btn-sm btn-outline-{{ 'success' if service.lostack_access_enabled else 'secondary' }} btn-action py-0 px-2"
         onclick="toggleServiceAccessControl({{ service.id }})"
         title="{{ 'Disable' if service.lostack_access_enabled else 'Enable' }} Access control"
         style="min-width: 60px;">
         <i class="bi bi-{{ 'toggle-on' if service.lostack_access_enabled else 'toggle-off' }} me-1"></i>
         {{ 'On' if service.lostack_access_enabled else 'Off' }}
-      </button>
+        </button>
+      {% endif %}
     </div>
   </div>
   <div class="small mb-0">

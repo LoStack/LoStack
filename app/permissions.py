@@ -59,7 +59,7 @@ def setup_permissions(app:Flask) -> None:
                 if not is_trusted_ip(remote_addr, app.config["TRUSTED_PROXY_IPS"]):
                     logging.warning("Untrusted proxy: %s", remote_addr)
                     abort(403)
-
+                print(request.headers)
                 meta = get_proxy_user_meta(
                     request,
                     {

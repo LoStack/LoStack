@@ -272,26 +272,6 @@ def _init_db(app):
 
     logging.info("Initializing db...")
     db.create_all(bind_key="lostack-db")
-    # Check if secret key exists in database, generate one if necessary
-    # This key is used to maintain user sessions across application restarts
-    # It is also used to reduce the chance of impersonation attacks
-    secret_key = SecretKey.query.get(1)
-    if secret_key is None:
-        key_value = ''.join([random_choice(ascii_lowercase) for _ in range(24)])
-        secret_key = SecretKey(id=1, key=str(key_value))
-        db.session.add(secret_key)
-        db.session.commit()
-    key_value = secret_key.key
-    app.secret_key = key_value
-    # Do the same as described above for flask wtf forms CSRF protection 
-    wtf_secret_key = SecretKey.query.get(2)
-    if wtf_secret_key is None:
-        wtf_key_value = ''.join([random_choice(ascii_lowercase) for _ in range(24)])
-        wtf_secret_key = SecretKey(id=2, key=wtf_key_value)
-        db.session.add(wtf_secret_key)
-        db.session.commit()
-    wtf_key_value = wtf_secret_key.key
-    app.config["WTF_CSRF_SECRET_KEY"] = wtf_key_value
     if not User.query.get(1):
         logging.info("Creating default user with id=1")
         user = User(id=1, name="admin", permission_integer=PERMISSION_ENUM.ADMIN)

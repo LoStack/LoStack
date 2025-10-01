@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM python:3.10-alpine AS build
+FROM python:3.10-alpine AS builder
 
 WORKDIR /lostack
 
@@ -33,4 +33,4 @@ ENTRYPOINT ["python3", "-u", "run.py"]
 # ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "1", "--timeout", "30", "app:create_app"]
 
 # Dev environment stage
-FROM build AS dev-envs
+FROM builder AS dev-envs

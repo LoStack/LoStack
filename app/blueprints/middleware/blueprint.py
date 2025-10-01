@@ -54,13 +54,16 @@ def register_blueprint(app: Flask) -> Blueprint:
         FORWARDED_METHOD_HEADER = app.config.get("FORWARDED_METHOD_HEADER")
         FORWARDED_URI_HEADER = app.config.get("FORWARDED_URI_HEADER")
         DOMAIN_NAME = app.config.get("DOMAIN_NAME")
+        NAME_HEADER = app.config.get("NAME_HEADER")
+        EMAIL_HEADER = app.config.get("EMAIL_HEADER")
 
     app.autostart_session_manager = session_manager = SessionManager(app)
-    # app.middleware_task_handler = task_handler = MiddlewareManager(app)
 
     logger.debug(f"""
 \nStarting Auth blueprint with configuration
 \tUsername header: {USERNAME_HEADER}
+\tName header: {NAME_HEADER}
+\tEmail header: {EMAIL_HEADER}
 \tGroups header: {GROUPS_HEADER}
 \tAdmin group: {ADMIN_GROUP}
 \tTrusted proxies: {TRUSTED_PROXY_IPS}
@@ -158,34 +161,38 @@ def register_blueprint(app: Flask) -> Blueprint:
     @check_access  # check_access limits by proxy group
     def auth() -> Response:
         try:
-            username = request.headers.get(USERNAME_HEADER)
-            groups = request.headers.get(GROUPS_HEADER)
-            resp = Response(status=200)
-            resp.headers[USERNAME_HEADER] = username
-            resp.headers[GROUPS_HEADER] = groups
-
             try:
                 meta = get_proxy_user_meta(
                     request,
                     {
                         "user": USERNAME_HEADER,
                         "groups": GROUPS_HEADER,
+                        "name": NAME_HEADER,
+                        "email": EMAIL_HEADER,
                         "forwarded_for": FORWARDED_FOR_HEADER,
                         "forwarded_host": FORWARDED_HOST_HEADER,
                         "forwarded_method": FORWARDED_METHOD_HEADER,
                         "forwarded_uri": FORWARDED_URI_HEADER
                     }
                 )
+
+                # Create response with headers
+                resp = Response("OK", status=200)
+                resp.headers[USERNAME_HEADER] = meta["user"]
+                resp.headers[GROUPS_HEADER] = ",".join(meta["groups"])
+                resp.headers[NAME_HEADER] = meta["name"]
+                resp.headers[EMAIL_HEADER] = meta["email"]
+                
                 forwarded_host = meta["forwarded_host"]
-                forwarded_for =  meta["forwarded_for"]
-                forwarded_uri =  meta["forwarded_uri"]
+                forwarded_for = meta["forwarded_for"]
+                forwarded_uri = meta["forwarded_uri"]
                 service_name = forwarded_host.split(".")[0]
                 package_entry = current_app.models.PackageEntry.query.filter_by(name=service_name).first()
                 
                 if not package_entry:
                     # No package entry means no autostart needed
                     logger.info(f"No package entry found for {service_name} - skipping autostart")
-                    return Response("OK", status=200)
+                    return resp
                 
                 logger.debug(f"Checking autostart for service: {service_name}")
                 task_id = session_manager.handle_autostart(package_entry, current_user, redirect=forwarded_host+forwarded_uri)
@@ -195,17 +202,15 @@ def register_blueprint(app: Flask) -> Blueprint:
                     return redirect(stream_url, code=302)
                 else:
                     logger.debug(f"No task start needed for {service_name}")
-                    return Response("OK",status=200)
+                    return resp
 
             except Exception as e:
                 logger.error(f"ERROR: Error in autostart: {str(e)}", exc_info=True)
                 return Response("Internal Server Error", status=500)
 
-            return Response("OK",status=200)
         except Exception as e:
             logger.error(f"ERROR: Error in auth endpoint: {str(e)}", exc_info=True)
             return Response("Internal Server Error", status=500)
-       
 
     def check_task_access(func):
         """Decorator to check user access to task endpoints"""

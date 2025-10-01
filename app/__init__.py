@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import platform
+import secrets
 import sys
 from flask import (
     Flask,
@@ -29,14 +30,17 @@ def _require_config(app, var_name):
         raise ValueError(msg)
     return value
 
-def _if_not_exists_write(dest, content, conditional=True) -> None:
-    if not conditional or os.path.exists(dest):
-        return # Do nothing
+def _if_not_exists_write(dest, content, conditional=True) -> bool:
+    if not conditional:
+        return False # Do nothing
+    if os.path.exists(dest):
+        return False # Do nothing
     parent = os.path.dirname(dest)
     if not os.path.exists(parent):
         os.makedirs(parent)
     with open(dest, "w+") as f:
         f.write(content)
+    return True
 
 def setup_app_config(app: Flask) -> None:
     for k, v in ENV_DEFAULTS.items():
@@ -47,7 +51,7 @@ def setup_app_config(app: Flask) -> None:
         if k in ENV_NON_REQUIRED:
             continue
         _require_config(app, k)
-    # Blueprint can populate this to add to context provider
+    # Blueprints can populate this to add to context provider
     app.config["PROVIDED_CONTEXT"] = {}
     trusted_proxies_string = app.config.get("TRUSTED_PROXY_IPS", None)
     if not trusted_proxies_string:
@@ -143,6 +147,18 @@ def setup_docker_handler(app):
         app.docker_handler = init_service_manager(app)
         app.docker_manager.modified_callback = app.docker_handler.refresh
 
+def setup_secrets(app):
+    app.logger.info("Loading secrets keys")
+    secrets_files = (
+        ("SECRET_KEY", "/config/lostack/secrets/secret_key"),
+        ("WTF_CSRF_SECRET_KEY", "/config/lostack/secrets/wtf_secret_key"),
+    )
+    for conf_name, file in secrets_files:
+        with open(file, "r") as f:
+            app.config[conf_name] = f.read()
+    app.secret_key = app.config["SECRET_KEY"]
+    app.logger.info(app.secret_key)
+
 def handle_first_run(app):
     # Config file creation
     config_files = (
@@ -176,15 +192,26 @@ def handle_first_run(app):
             app.config["DEFAULT_COREDNS_CONFIG"],
             app.config.get("FIRST_RUN_CREATE_COREDNS_CONFIG")
         ),
-        ( # Static CoreDNS config file
+        ( # LoStack autostart session tracking file
             "/config/lostack/sessions.json",
             "{}",
             True
+        ),
+        ( # LoStack Flask Secret Key
+            "/config/lostack/secrets/secret_key",
+            secrets.token_urlsafe(32),
+            app.config.get("FIRST_RUN_CREATE_FLASK_SECRET_KEY")
+        ),
+        ( # LoStack Flask WTF Secret Key
+            "/config/lostack/secrets/wtf_secret_key",
+            secrets.token_urlsafe(32),
+            app.config.get("FIRST_RUN_CREATE_WTF_SECRET_KEY")
         )
     )
 
     for args in config_files:
-        _if_not_exists_write(*args)
+        if not _if_not_exists_write(*args):
+            app.logger.info(f"Skipped {args[0]} - already exists or disabled")
 
     setup_media_folders(app)
     setup_compose(app)
@@ -238,6 +265,7 @@ def create_app(*args, **kw) -> Flask:
         app.logger.info("Running first run tasks...")
         handle_first_run(app)
 
+    setup_secrets(app)
     setup_ldap(app)
     setup_and_init_db(app)
     setup_docker_manager(app)

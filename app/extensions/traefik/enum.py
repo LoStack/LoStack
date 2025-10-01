@@ -1,28 +1,29 @@
 # Todo, make config file generator
 
-class MATCHERS:
-    HEADER = "Header"
-    HEADERREGEXP = "HeaderRegexp"
-    HOSTREGEXP = "HostRegexp"
-    METHOD = "Method"
-    PATH = "Path"
-    PATHPREFIX = "PathPrefix"
-    PATHREGEXP = "PathRegexp"
-    QUERY = "Query"
-    QUERYREGEXP = "QueryRegexp"
-    CLIENTIP = "ClientIP"
+class Middlware:
+    pass
 
-    ARGS = {
-        "HEADER" : ('key', 'value'),
-        "HEADERREGEXP" : ('key', 'regexp'),
-        "HOSTREGEXP" : ('domain'),
-        "METHOD" : ('method'),
-        "PATH" : ('path'),
-        "PATHPREFIX" : ('prefix'),
-        "PATHREGEXP" : ('regexp'),
-        "QUERY" : ('key', 'value'),
-        "QUERYREGEXP" : ('key', 'regexp'),
-        "CLIENTIP" : ('ip')
+
+class TraefikRule:
+    pass
+    def __init__(self, type):
+
+    def express(self) -> str:
+        return
+
+
+class RULEMATCHERS:
+    _NAMES = {
+        (HEADER       := "Header")      : ('key',   'value'),
+        (HEADERREGEXP := "HeaderRegexp"): ('key',   'regexp'),
+        (HOSTREGEXP   := "HostRegexp")  : ('domain', ),
+        (METHOD       := "Method")      : ('method', ),
+        (PATH         := "Path")        : ('path', ),
+        (PATHPREFIX   := "PathPrefix")  : ('prefix', ),
+        (PATHREGEXP   := "PathRegexp")  : ('regexp', ),
+        (QUERY        := "Query")       : ('key',   'value'),
+        (QUERYREGEXP  := "QueryRegexp") : ('key',   'regexp'),
+        (CLIENTIP     := "ClientIP")    : ('ip', )
     }
 
 
@@ -47,3 +48,9 @@ def generate_config():
             "routers": {}
         }
     }
+
+def generate_router(
+    name:str,
+    rule:TraefikRule,
+    rule_syntax:str = "v2"
+):
