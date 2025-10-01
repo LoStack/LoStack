@@ -175,6 +175,11 @@ def handle_first_run(app):
             "/config/coredns/resolv.conf",
             app.config["DEFAULT_COREDNS_CONFIG"],
             app.config.get("FIRST_RUN_CREATE_COREDNS_CONFIG")
+        ),
+        ( # Static CoreDNS config file
+            "/config/lostack/sessions.json",
+            "{}",
+            True
         )
     )
 
