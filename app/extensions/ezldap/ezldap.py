@@ -72,7 +72,7 @@ class LDAPManager:
         self.require_starttls   = conf("LDAP_REQUIRE_STARTTLS", "false").lower() == "true"
             
         # Application-specific settings
-        self.admins_group       = conf("LDAP_ADMINS_GROUP", "admins")
+        self.admins_group       = conf("ADMIN_GROUP", "admins")
         self.email_domain       = conf("EMAIL_DOMAIN", f"mail.{self.ldap_domain}")
 
         self.connection = None

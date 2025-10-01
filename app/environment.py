@@ -288,7 +288,6 @@ ENV_DEFAULTS = {
     "LDAP_TLS_VERIFY_CLIENT"        : "never",
     "LDAP_IGNORE_CERT_ERRORS"       : "true",
     "LDAP_REQUIRE_STARTTLS"         : "false",
-    "LDAP_ADMINS_GROUP"             : "admins",
     "EMAIL_DOMAIN"                  : "lostack.internal",
     "MEDIA_FOLDERS"                 : ",".join(MEDIA_FOLDERS),
     # "ENABLE_DNS"                    : "true",

@@ -23,18 +23,18 @@ def sanitize_css(css_input: str) -> str:
                 safe_css.append(f"{rule.selectorText} {{ {' '.join(safe_props)} }}")
     return "\n".join(safe_css)
 
-class PERMISSION_ENUM:
+def _init_db(app):
+    db = app.db
+
+    class PERMISSION_ENUM:
         _NAMES = {
             (EVERYBODY := 1) : "everybody",
             (USER := 5)     : "users",
-            (ADMIN := 10)   : "admins",
+            (ADMIN := 10)   : app.config.get("ADMIN_GROUP"),
             (OWNER := 15)   : "owners",
             (NOACCESS := 99): "NOACCESS"
         } 
         _LOOKUP = {v:k for k,v in _NAMES.items()}
-
-def _init_db(app):
-    db = app.db
 
     class User(UserMixin, db.Model):
         """User object with flask_login UserMixin"""
@@ -274,7 +274,7 @@ def _init_db(app):
     db.create_all(bind_key="lostack-db")
     if not User.query.get(1):
         logging.info("Creating default user with id=1")
-        user = User(id=1, name="admin", permission_integer=PERMISSION_ENUM.ADMIN)
+        user = User(id=1, name=app.config.get("LDAP_ADMIN_USERNAME"), permission_integer=PERMISSION_ENUM.ADMIN)
         db.session.add(user)
         db.session.commit()
     db.session.commit()

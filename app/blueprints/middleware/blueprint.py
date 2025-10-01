@@ -126,7 +126,7 @@ def register_blueprint(app: Flask) -> Blueprint:
                     if package_entry:
                         allowed_groups = package_entry.allowed_groups
                     else:
-                        allowed_groups = ["admins"]
+                        allowed_groups = [ADMIN_GROUP]
 
                 if not any((g in allowed_groups for g in user_groups)):
                     if not ADMIN_GROUP in user_groups:

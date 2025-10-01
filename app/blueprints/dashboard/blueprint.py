@@ -48,7 +48,7 @@ def register_blueprint(app:Flask) -> Blueprint:
         logger.info(f"Showing dashboard with groups {user_groups}")
 
         # Filter packages based on user access
-        if "admins" in user_groups:
+        if app.config.get("ADMIN_GROUP") in user_groups:
             allowed_packages = installed_packages
             allowed_routes = all_routes
         else:
