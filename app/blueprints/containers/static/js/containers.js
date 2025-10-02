@@ -66,7 +66,7 @@ function renderContainers(containers) {
                 <span class="service-icon ms-2" data-icon="${iconName}"></span>
             </div>
         </div>
-        <div class="card-body overflow-auto p-0 mx-0 my-0 d-flex flex-column">
+        <div class="card-body overflow-auto p-0 mx-0 my-0 d-flex flex-column shadow-sm">
             <div class="mt-2">
                 ${imageSection}
                 ${networksSection}
@@ -75,7 +75,7 @@ function renderContainers(containers) {
                 ${labelsSection}
             </div>
         </div>
-        <div class="card-footer">
+        <div class="card-footer bg-transparent mx-2 px-0">
             ${actionButtons}
         </div>
     </div>
@@ -225,20 +225,20 @@ function getActionButtons(container) {
     const removeDisabled = container.State === 'running' ? 'disabled' : '';
     return `
     <div class="btn-group w-100" role="group">
-    <button class="btn btn-sm btn-outline-success" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/start', this)" title="Start">
+    <button class="btn btn-sm btn-outline-success" title="Start Container" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/start', this)" title="Start">
         <i class="bi bi-play"></i>
     </button>
-    <button class="btn btn-sm btn-outline-primary" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/stop', this)" title="Stop">
+    <button class="btn btn-sm btn-outline-primary" title="Stop Container" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/stop', this)" title="Stop">
         <i class="bi bi-stop"></i>
     </button>
-    <button class="btn btn-sm btn-outline-primary" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/logs', this)" title="Logs">
+    <button class="btn btn-sm btn-outline-primary" title="View Logs" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/logs', this)" title="Logs">
         <i class="bi bi-file-text"></i>
     </button>
     ${container.State === 'running' ? `
-        <button class="btn btn-sm btn-outline-primary" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/follow', this)" title="Follow Logs">
+        <button class="btn btn-sm btn-outline-primary" title="Attach to Logs" onclick="launchTerminalWithButtonAnimation('/containers/action/${container.Id}/follow', this)" title="Follow Logs">
         <i class="bi bi-eye"></i>
         </button>` : ''}
-    <button class="btn btn-sm btn-outline-danger" onclick="confirmRemoveContainer('${container.Id}', '${names}')" title="Remove" ${removeDisabled}>
+    <button class="btn btn-sm btn-outline-danger" title="Remove Container" onclick="confirmRemoveContainer('${container.Id}', '${names}')" title="Remove" ${removeDisabled}>
         <i class="bi bi-trash"></i>
     </button>
     </div>

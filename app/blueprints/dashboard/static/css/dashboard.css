@@ -27,13 +27,3 @@ transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 transform: translateY(-2px);
 box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
-
-/* Status badge improvements */
-.badge {
-font-weight: 500;
-padding: 0.375em 0.75em;
-}
-
-.badge i {
-opacity: 0.8;
-}

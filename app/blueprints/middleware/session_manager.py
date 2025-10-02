@@ -469,7 +469,6 @@ class SessionManager:
             self.logger.error("Failed to get container info!")
             return None
 
-        print(info)
         to_start = []
         for name, data in info.items():
             if not data:

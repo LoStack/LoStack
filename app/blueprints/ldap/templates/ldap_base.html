@@ -8,8 +8,8 @@
 <nav class="ldap-nav px-2 py-2 bg-dark mb-3 d-flex justify-content-between align-items-center">
   <ul class="nav nav-pills">
     <li class="nav-item">
-      <a class="nav-link px-3 py-2 my-2 mx-2 {% if 'user' in request.endpoint %}active{% endif %}"
-        href="{{ url_for('ldap.users') }}">
+      <a href="{{ url_for('ldap.users') }}"
+         class="nav-link px-3 py-2 my-2 mx-2 {% if 'user' in request.endpoint %}active{% endif %}">
         <i class="bi bi-person-badge me-1"></i> Users
       </a>
     </li>

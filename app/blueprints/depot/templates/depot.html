@@ -96,11 +96,16 @@ Service Depot
       <div class="col-lg-6 col-xl-4 mb-0 service-item" data-name="{{ package.search_data.name }}"
         data-title="{{ package.search_data.title }}" data-description="{{ package.search_data.description }}"
         data-group="{{ package.group or '' }}" data-tags="{{ package.search_data.tags }}">
-        <div class="card shadow depot-card service-card h-100">
-          <div class="card-header bg-primary text-light">
+        <div class="card shadow depot-card service-card h-100 {% if package.status != 'available' %}opacity-75{% endif %}">
+          <div class="card-header {% if package.status == 'available' %}bg-primary{% else %}bg-secondary{% endif %} text-light">
             <div class="d-flex align-items-start justify-content-between">
               <div class="flex-grow-1">
                 <h6 class="mb-0 fw-bold d-inline">{{ package.title }}</h6>
+                {% if package.status == 'installed' %}
+                <span class="badge bg-success ms-2">Installed</span>
+                {% elif package.status == 'in_compose' %}
+                <span class="badge bg-warning text-dark ms-2">In Compose</span>
+                {% endif %}
                 {% if package.description %}
                 <small class="opacity-75 d-block mt-1">{{ package.description }}</small>
                 {% endif %}
@@ -108,7 +113,7 @@ Service Depot
             </div>
           </div>
 
-          <div class="card-body">
+          <div class="card-body shadow-sm">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div>
                 {% if package.group %}
@@ -178,13 +183,51 @@ Service Depot
           </div>
 
           {# <!-- Card Footer --> #}
-          <div class="card-footer bg-transparent border-top-0">
+          <div class="card-footer bg-transparent border-top-0 mx-0 px-2">
+            {% if package.status == 'installed' %}
+            {# Package is fully installed and running #}
             <div class="d-flex gap-2 justify-content-between align-items-center">
+              <a href="{{ url_for('services.services', q=package.name) }}" 
+                 class="btn btn-success flex-grow-1 shadow-sm-hover">
+                <i class="bi bi-check-circle me-2"></i>
+                View in Services
+              </a>
+              {% set project_url = package.labels_dict.get('lostack.project_url') %}
+              {% if project_url %}
+              <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-github"></i>
+              </a>
+              {% endif %}
+            </div>
+            {% elif package.status == 'in_compose' %}
+            {# Package is in compose file but not launched #}
+            <div class="d-flex gap-2 justify-content-between align-items-center">
+              <a href="{{ url_for('launcher.launcher', file='lostack-compose.yml', container=package.name) }}" 
+                 class="btn btn-warning flex-grow-1 shadow-sm-hover">
+                <i class="bi bi-play-circle me-2"></i>
+                Launch from Compose
+              </a>
+              {% set project_url = package.labels_dict.get('lostack.project_url') %}
+              {% if project_url %}
+              <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-github"></i>
+              </a>
+              {% endif %}
+            </div>
+            {% else %}
+            {# Package is available to install #}
+            <div class="d-flex gap-2 justify-content-between align-items-center">
+              <button
+                onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_add', package=package.name) }}')"
+                class="btn btn-outline-primary btn-launch flex-grow-0 shadow-sm-hover">
+                <i class="bi bi-plus-circle"></i>
+              </button>
+              
               <button
                 onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_launch', package=package.name) }}')"
                 class="btn btn-outline-success btn-launch flex-grow-1 shadow-sm-hover">
-                <i class="bi bi-rocket-fill me-2"></i>
-                Launch Service
+                <i class="bi bi-rocket me-2"></i>
+                Launch
               </button>
 
               {% set project_url = package.labels_dict.get('lostack.project_url') %}
@@ -192,9 +235,9 @@ Service Depot
               <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
                 <i class="bi bi-github"></i>
               </a>
-
               {% endif %}
             </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -245,18 +288,17 @@ Service Depot
 <script src="{{ url_for('depot.static', filename='js/depot.js' ) }}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const packagesData = {{ packages| tojson | safe
-  }};
-  addServiceIcons(packagesData);
+    const packagesData = {{ packages| tojson | safe }};
+    addServiceIcons(packagesData);
 
-  const searchInput = document.getElementById('Search');
-  if (searchInput) {
-    searchInput.addEventListener('input', performSearch);
-    searchInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') clearSearch();
-    });
-  }
-  updateTagsSummary();
-});
+    const searchInput = document.getElementById('Search');
+    if (searchInput) {
+      searchInput.addEventListener('input', performSearch);
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') clearSearch();
+      });
+    }
+    updateTagsSummary();
+  });
 </script>
 {% endblock %}

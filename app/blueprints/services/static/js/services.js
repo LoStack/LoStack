@@ -1,10 +1,3 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-  tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
-  });
-});
-
 function serviceActionWithTerminal(streamUrl, actionTitle) {
   const modalTitle = document.getElementById('terminalModalLabel');
   if (modalTitle) {

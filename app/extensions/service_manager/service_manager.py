@@ -214,7 +214,7 @@ class ServiceManager:
             installable.append(p)
         return installable
     
-    def add_depot_package(self, package_name:str, result_queue) -> list[str]:
+    def add_depot_package(self, package_name:str, result_queue, complete=False) -> list[str]:
         """
         Adds a depot package to the dynamic compose.
         Returns the list of docker services added.
@@ -237,6 +237,10 @@ class ServiceManager:
             time.sleep(1) # Ensure result queue gets pushed to user before context ends
             raise e
         
+        if complete:
+            result_queue.put_nowait("__COMPLETE__")
+            self.force_sync()
+
         result_queue.put_nowait(f"Added services: {service_names}")
         return service_names
     
@@ -342,7 +346,8 @@ class ServiceManager:
             except Exception as e:
                 result_queue.put_nowait(f"Error handling package removal - {e}")
             finally:
-                result_queue.put_nowait("__COMPLETE__")
+                if complete:
+                    result_queue.put_nowait("__COMPLETE__")
                 self.force_sync()
         return result_queue
 

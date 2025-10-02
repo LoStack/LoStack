@@ -1,0 +1,18 @@
+.launcher-nav {
+    border-radius: var(--bs-border-radius);
+}
+
+.launcher-nav .nav-link {
+    color: var(--bs-light);
+    border-radius: var(--bs-border-radius-sm);
+}
+
+.launcher-nav .nav-link.active {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+}
+
+.launcher-nav .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+    color: var(--bs-primary);
+}

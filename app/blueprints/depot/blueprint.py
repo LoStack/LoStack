@@ -9,14 +9,6 @@ import os
 from queue import Queue
 from app.extensions.common.stream_handler import StreamHandler
 
-
-def stream_depot_package_install(package_name: os.PathLike) -> Response:
-    return StreamHandler.generic_context_stream(
-        depot_package_install,
-        current_app._get_current_object(),
-        package_name
-    )
-
 def stream_remove_package(package_db_id: int) -> Response:
     with current_app.app_context():
         callback = current_app.docker_handler.remove_depot_package
@@ -42,25 +34,28 @@ def register_blueprint(app:Flask) -> Blueprint:
         """Show depot page"""
         all_packages = current_app.docker_handler.depot_handler.packages.keys()
         installed_packages = [s.name for s in current_app.models.PackageEntry.query.all()]
-        available_packages = [s for s in all_packages if not s in installed_packages]
-        depot_data = current_app.docker_handler.depot_handler.format_packages_for_depot_page(available_packages)
-        # Passes pre-formatted data / arguments to template:
-        # Pre-processing litterally halved the size of the template file
-        # I wasted so much time writing all that jinja filtering 
-        # trying to process the data directly lol
-        # {
-        #     'packages': processed_packages,
-        #     'groups': dict(sorted(group_counts.items())),
-        #     'tags': dict(sorted(tag_counts.items())),
-        #     'total_count': len(processed_packages)
-        # }
+        
+        compose_handler = current_app.docker_manager.compose_file_handlers["/docker/docker-compose.yml"]
+        lostack_handler = current_app.docker_manager.compose_file_handlers["/docker/lostack-compose.yml"]
+        compose_services = [*compose_handler.services, *lostack_handler.services]
+        
+        depot_data = current_app.docker_handler.depot_handler.format_packages_for_depot_page(list(all_packages))
+        
+        for package_name, package in depot_data['packages'].items():
+            print(f"DEBUG - Checking package: {package_name}")
+            if package_name in installed_packages:
+                package['status'] = 'installed'
+            elif package_name in compose_services:
+                package['status'] = 'in_compose'
+            else:
+                package['status'] = 'available'
+        
         return render_template(
             "depot.html",
             **depot_data,
             depot_repo=current_app.config.get("DEPOT_URL"),
             depot_branch=current_app.config.get("DEPOT_BRANCH")
         )
-
 
     @bp.route("/update/stream")
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
@@ -73,7 +68,7 @@ def register_blueprint(app:Flask) -> Blueprint:
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def depot_launch(package:str) -> Response:
         result_queue = Queue()
-        result_queue.put_nowait("Adding depot package to lostack compose file.")
+        result_queue.put_nowait("Adding depot package to lostack compose file and launching service.")
 
         with current_app.app_context():
             try:
@@ -92,6 +87,19 @@ def register_blueprint(app:Flask) -> Blueprint:
                 result_queue=result_queue, 
                 complete=True
             )
+
+
+    @bp.route('/add/<package>/stream')
+    @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
+    def depot_add(package:str) -> Response:
+        result_queue = Queue()
+        result_queue.put_nowait("Adding depot package to lostack compose file. (No service launch)")
+        
+        return StreamHandler.generic_context_stream(
+            current_app.docker_handler.add_depot_package,
+            current_app._get_current_object(),
+            package
+        )
 
 
     @bp.route('/remove/<int:service_id>/stream')

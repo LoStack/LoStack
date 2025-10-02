@@ -191,15 +191,15 @@
 
     {% else %}
     <!-- Empty State -->
-    <div class="text-center py-5">
+    <div class="text-center py-0">
       <div class="card">
-        <div class="card-body py-5">
+        <div class="card-body py-1">
           <i class="bi bi-inbox display-1 text-muted mb-3"></i>
           <h4 class="text-muted mb-3">No Routes Configured</h4>
           <p class="text-muted mb-4">
             Create a new route to configure Traefik routing for your services
           </p>
-          <a href="{{ url_for('traefik_routes.route_new') }}" class="btn btn-primary">
+          <a href="{{ url_for('traefik_routes.route_new') }}" class="btn btn-primary mb-3">
             <i class="bi bi-plus-circle me-2"></i>
             Add New Route
           </a>

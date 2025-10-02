@@ -5,14 +5,21 @@ import threading
 import logging
 
 
-def stream_generator(target, args=(), kwargs={}):
+def stream_generator(target, args=(), kwargs={}, app=None):
     """Runs an action as a thread, yields output queue contents to a generator"""
+    def context_target(*a, **k):
+        if app:
+            with app.app_context():
+                return target(*a, **k)
+        else:
+            return target(*a, **k)
+
     def generator():
         result_queue = queue.Queue()
         kw = kwargs.copy()
         kw.update({"result_queue": result_queue})
         thread = threading.Thread(
-            target=target,
+            target=context_target,
             args=args,
             kwargs=kw,
             daemon=False

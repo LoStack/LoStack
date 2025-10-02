@@ -168,3 +168,8 @@ It currently only has support for text-file editing, and lacks features for crea
  - [Flask Discord](https://discord.gg/B6AGZRP)
  - [Homepage Discord](https://discord.com/invite/k4ruYNrudu)
  - [Authelia Discord](https://discord.authelia.com/)
+
+# Questions / Comments:
+ - [**Join us in the LoStack Discord**](https://discord.gg/MnXcKqfjQB)
+ - Pull Requests wanted!
+ 

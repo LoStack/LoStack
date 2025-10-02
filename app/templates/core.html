@@ -92,6 +92,11 @@
                                 <i class="bi bi-boxes me-2"></i> Containers
                             </a>
 
+                            <a class="nav-link text-light {% if request.endpoint == 'launcher.launcher' %}active{% endif %}" 
+                            href="{{ url_for('launcher.launcher') }}">
+                                <i class="bi bi-shift me-2"></i> Launcher
+                            </a>
+
                             <a class="nav-link text-light {% if request.endpoint == 'depot.depot' %}active{% endif %}" 
                             href="{{ url_for('depot.depot') }}">
                                 <i class="bi bi-shop-window me-2"></i> Depot

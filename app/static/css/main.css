@@ -165,3 +165,12 @@
         max-width: none;
     }
 }
+
+.badge {
+font-weight: 500;
+padding: 0.375em 0.75em;
+}
+
+.badge i {
+opacity: 0.8;
+}

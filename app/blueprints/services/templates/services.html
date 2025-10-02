@@ -163,7 +163,7 @@ LoStack Services
 
 {% macro render_containers_action(service, action, class, icon) %}
 <button class="btn btn-sm btn-outline-{{class}} btn-action py-0 px-3" 
-  onclick="serviceActionWithTerminal('{{ url_for("services.service_action", service_id=service.id, action=action) }}', '{{ service.display_name_or_name }} - {{ action|title }}}')"
+  onclick="serviceActionWithTerminal('{{ url_for("services.service_action", service_id=service.id, action=action) }}', '{{ service.display_name_or_name }} - {{ action|title }}')"
   title="{{ action|title }} all containers"
 >
 <i class="bi {{ icon }}"></i>
@@ -327,10 +327,14 @@ LoStack Services
 </div>
 {% endmacro %}
 
+<!-- Replace the service_card macro - add data attributes to the card div -->
+
 {% macro service_card(service, containers) %}
 <div class="col-lg-6 col-xxl-4 mb-0">
-  <div class="card shadow service-card {% if not service.enabled %}service-disabled{% endif %}">
-    <div class="card-header
+  <div class="card shadow service-card {% if not service.enabled %}service-disabled{% endif %}" 
+       data-service-name="{{ service.name }}" 
+       data-service-display-name="{{ service.display_name_or_name }}">
+    <div class="card-header search-card
       {% if service.enabled %}
         {% if service.core_service %}
           bd-indigo-700 text-light
@@ -409,7 +413,7 @@ LoStack Services
     ]) }}
 
     {% if services %}
-    {{ search_bar("Search services by name") }}
+    {{ search_bar("Search services by name", contents=search_query) }}
     <div class="row g-3 mb-5">
       {% for service in services %}
         {{ service_card(service, containers) }}
@@ -484,18 +488,18 @@ function filterServices() {
 
   serviceCards.forEach(card => {
     const cardContainer = card.closest('.col-lg-6, .col-xxl-4');
-    const serviceNameElement = card.querySelector('.card-header label.fw-bold');
+    const serviceName = card.getAttribute('data-service-name') || '';
+    const displayName = card.getAttribute('data-service-display-name') || '';
 
-    if (serviceNameElement) {
-      const serviceName = serviceNameElement.textContent.toLowerCase().trim();
-      const shouldShow = searchTerm === '' || serviceName.includes(searchTerm);
+    const shouldShow = searchTerm === '' || 
+                      serviceName.toLowerCase().includes(searchTerm) ||
+                      displayName.toLowerCase().includes(searchTerm);
 
-      if (shouldShow) {
-        cardContainer.style.display = '';
-        visibleCount++;
-      } else {
-        cardContainer.style.display = 'none';
-      }
+    if (shouldShow) {
+      cardContainer.style.display = '';
+      visibleCount++;
+    } else {
+      cardContainer.style.display = 'none';
     }
   });
 
@@ -567,6 +571,7 @@ function initializeSearch() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(filterServices, 50);
   });
+  filterServices()
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -580,3 +585,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {% endblock %}
+

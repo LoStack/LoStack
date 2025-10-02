@@ -1,0 +1,134 @@
+{% extends "core.html" %}
+
+{% block head %}
+<link href="{{ url_for('launcher.static', filename='css/launcher.css' ) }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block page_title %} <i class="bi bi-shift-fill me-2"></i>Compose Launcher{% endblock %}
+
+{% block content %}
+<nav class="launcher-nav px-2 py-2 bg-dark mb-3 d-flex justify-content-between align-items-center">
+  <ul class="nav nav-pills">
+    {% for file in compose_files %}
+    <li class="nav-item">
+      <a href="{{ url_for('launcher.launcher', file=file.path) }}"
+        class="nav-link px-3 py-2 my-2 mx-2 {% if selected_file == file.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-code me-1"></i> {{ file.path }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="ms-auto">
+    <div class="mx-3">
+      {% block launcher_nav_content %}
+      {% endblock %}
+    </div>
+  </div>
+</nav>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Container Name</th>
+            <th>Image</th>
+            <th>Primary</th>
+            <th>Group</th>
+            <th class="table-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if containers %}
+          {% for container in containers %}
+          
+          <tr class="{% if container.name==selected_container %}table-info{% endif %}" >
+            <td>
+              <div class="fw-bold text-primary">
+                {% if container.is_running %}
+                <span class="badge bg-success py-1 px-2 me-2">
+                  <i class="bi bi-play-fill"></i> Running
+                </span>
+                {% elif container.is_stopped %}
+                <span class="badge bg-warning text-dark py-1 px-2 me-2">
+                  <i class="bi bi-pause-fill"></i> Stopped
+                </span>
+                {% elif container.is_not_launched %}
+                <span class="badge bg-secondary py-1 px-2 me-2">
+                  <i class="bi bi-dash-circle"></i> Not Launched
+                </span>
+                {% endif %}
+                {{ container.name }}
+              </div>
+            </td>
+            <td class="text-secondary">{{ container.image }}</td>
+            <td class="text-center">
+              {% if container.is_primary %}
+              <span class="badge bg-success py-1 px-1"><i class="bi bi-check-circle-fill"></i></span>
+              {% else %}
+              <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if container.group != 'None' %}
+              <span class="badge bg-primary py-1 px-1">{{ container.group }}</span>
+              {% else %}
+              <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+
+            <td class="table-actions">
+              <div class="btn-group" role="group">
+                {# Container-level start/stop #}
+                {% if container.is_running %}
+                <button class="btn btn-sm btn-danger"
+                  onclick="launchTerminalWithButtonAnimation('{{ url_for('launcher.action', mode='container', name=container.name, action='stop', file=selected_file) }}', this)"
+                  title="Stop Container">
+                  <i class="bi bi-stop-circle"></i>
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-success"
+                  onclick="launchTerminalWithButtonAnimation('{{ url_for('launcher.action', mode='container', name=container.name, action='up', file=selected_file) }}', this)"
+                  title="Up Container">
+                  <i class="bi bi-play-circle"></i>
+                </button>
+                {% endif %}
+
+                {# Group-level start/stop for primary services with groups #}
+                {% if container.is_primary and container.group != 'None' %}
+                {% if container.is_running %}
+                <button class="btn btn-sm btn-outline-danger"
+                  onclick="launchTerminalWithButtonAnimation('{{ url_for('launcher.action', mode='group', name=container.name, action='stop', file=selected_file) }}', this)"
+                  title="Stop Group"
+                  id="stop-group-{{ container.group }}">
+                  <i class="bi bi-arrow-down-circle"></i>
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-outline-success"
+                  onclick="launchTerminalWithButtonAnimation('{{ url_for('launcher.action', mode='group', name=container.name, action='up', file=selected_file) }}', this)"
+                  title="Up Group"
+                  id="start-group-{{ container.group }}">
+                  <i class="bi bi-fast-forward-circle"></i>
+                </button>
+                {% endif %}
+                {% endif %}
+
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              No containers found in this compose file
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -41,7 +41,7 @@ class StreamHandler:
         if force_sync:
             kw.update({"complete":False})
             
-        stream = stream_generator(action, (target, *args), kw)
+        stream = stream_generator(action, (target, *args), kw, app=app)
         
         def generator():
             for message in stream(): 

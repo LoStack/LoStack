@@ -116,11 +116,12 @@ class ComposeFileManager(FileSystemEventHandler):
 
         return result
 
-    def get_service_group_data(self, group_name:str, result:dict = {}) -> dict[str:dict]:
+    def get_service_group_data(self, group_name:str, result:dict = None) -> dict[str:dict]:
         """
         Gets data for a given Sablier group.
         Returns a dict of dicts mapped by package name.
         """
+        result = result or {}
         for name, config in self.content.get("services", {}).items():
             labels = config.get("labels", [])
             for label in labels:

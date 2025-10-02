@@ -18,17 +18,15 @@ def register_blueprint(app:Flask) -> Blueprint:
         template_folder=os.path.join(os.path.dirname(__file__), "templates")
     )
 
-
     @bp.route("/")
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def containers() -> Response:
-        """Docker container management"""
+        """List of all containers"""
         containers = current_app.docker_manager.api_client.containers(all=True)
         return render_template(
             "containers.html",
             containers=containers
         )
-
 
     @bp.route("/action/<id>/<action>")
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
@@ -47,14 +45,12 @@ def register_blueprint(app:Flask) -> Blueprint:
 
         return act(id)
 
-
     @bp.route('/api/all')
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def api_containers() -> Response:
-        """Docker container management"""
+        """Get containers for JS page refresh"""
         containers = current_app.docker_manager.api_client.containers(all=True)
         return jsonify({ 'containers': containers})
     
-
     app.register_blueprint(bp)
     return bp

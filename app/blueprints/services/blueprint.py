@@ -27,6 +27,8 @@ def register_blueprint(app:Flask) -> Blueprint:
     @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
     def services() -> Response:
         """List all installed Packages groups"""
+        search_query = request.args.get('q', '', type=str)
+
         services = current_app.models.PackageEntry.query.order_by(
             current_app.models.PackageEntry.name
         ).all()
@@ -47,6 +49,7 @@ def register_blueprint(app:Flask) -> Blueprint:
             "services.html",
             services=services,
             containers=containers,
+            search_query=search_query
         )
     
     @bp.route("/action/<int:service_id>/edit", methods=["GET", "POST"])
@@ -54,6 +57,11 @@ def register_blueprint(app:Flask) -> Blueprint:
     def service_edit(service_id):
         """Edit an existing LoStack Package Entry"""
         service = current_app.models.PackageEntry.query.get_or_404(service_id)
+
+        if service.force_compose_edit:
+            flash("Error: This sevice cannot be edited in the UI, make changes in the compose file.", "warning")
+            return redirect(url_for("services.services"))
+
         form = PackageEntryForm()
         
         try:
