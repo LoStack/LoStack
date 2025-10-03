@@ -107,6 +107,11 @@ It currently only has support for text-file editing, and lacks features for crea
 
 ### Planned features
 
+#### Roadmap
+![LoStack Roadmap](docs/images/roadmap.png?raw=true "LoStack Roadmap")
+
+#### Coming Soon
+
 - **Automatic Container Segregation**:
     - LoStack will automatically create Docker networks for services:
         - A bridge network from the primary container to Traefik

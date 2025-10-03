@@ -4,18 +4,11 @@ Group-based endpoint access controller for LoStack
 Compatible with Traefik+Authelia and possibly other auth systems
 """
 
-import datetime
-import fnmatch
 import json
 import logging
 import os
-import threading
 import time
 import traceback
-import queue
-import uuid
-from queue import Queue, Empty
-from collections import defaultdict
 from flask import (
     Flask,
     Blueprint,
@@ -33,6 +26,41 @@ from app.permissions import get_proxy_user_meta
 from .session_manager import SessionManager, parse_duration
 
 logger = logging.getLogger(__name__ + f'.ACCESS')
+
+
+class PermissionCache:
+    """Cache for user permissions and route/package lookups"""
+    def __init__(self, ttl=15):
+        self.ttl = ttl
+        self.cache = {}
+        
+    def _is_expired(self, timestamp):
+        return time.time() - timestamp > self.ttl
+    
+    def get(self, key):
+        if key in self.cache:
+            data, timestamp = self.cache[key]
+            if not self._is_expired(timestamp):
+                return data
+            else:
+                del self.cache[key]
+        return None
+    
+    def set(self, key, value):
+        self.cache[key] = (value, time.time())
+    
+    def clear(self):
+        self.cache.clear()
+    
+    def cleanup_expired(self):
+        """Remove expired entries"""
+        current_time = time.time()
+        expired_keys = [
+            k for k, (_, ts) in self.cache.items() 
+            if current_time - ts > self.ttl
+        ]
+        for k in expired_keys:
+            del self.cache[k]
 
 
 def register_blueprint(app: Flask) -> Blueprint:
@@ -58,6 +86,7 @@ def register_blueprint(app: Flask) -> Blueprint:
         EMAIL_HEADER = app.config.get("EMAIL_HEADER")
 
     app.autostart_session_manager = session_manager = SessionManager(app)
+    permission_cache = PermissionCache(ttl=15)
 
     logger.debug(f"""
 \nStarting Auth blueprint with configuration
@@ -73,6 +102,71 @@ def register_blueprint(app: Flask) -> Blueprint:
 \tForwarded URI header: {FORWARDED_URI_HEADER}
 \tDomain Name: {DOMAIN_NAME}
 """)
+
+    def get_target_info(service_name):
+        """Get target info with caching"""
+        cache_key = f"target:{service_name}"
+        cached = permission_cache.get(cache_key)
+        if cached is not None:
+            logger.debug(f"Cache HIT for target: {service_name}")
+            return cached
+        
+        logger.debug(f"Cache MISS for target: {service_name}")
+        target = None
+        is_package = False
+        
+        package_entry = current_app.models.PackageEntry.query.filter_by(name=service_name).first()
+        if package_entry:
+            target = package_entry
+            is_package = True
+        else:
+            route_entry = current_app.models.Route.query.filter_by(name=service_name).first()
+            if route_entry:
+                target = route_entry
+        
+        result = {
+            'target': target,
+            'is_package': is_package,
+            'allowed_groups': target.allowed_groups if target else []
+        }
+        
+        permission_cache.set(cache_key, result)
+        return result
+
+    def check_user_access(username, user_groups, service_name):
+        """Check if user has access to service with caching"""
+        groups_key = ",".join(sorted(user_groups))
+        cache_key = f"access:{username}:{groups_key}:{service_name}"
+        
+        cached = permission_cache.get(cache_key)
+        if cached is not None:
+            logger.debug(f"Cache HIT for access check: {username}@{service_name}")
+            return cached
+        
+        logger.debug(f"Cache MISS for access check: {username}@{service_name}")
+        
+        if ADMIN_GROUP in user_groups:
+            result = {'allowed': True, 'is_admin': True, 'target_info': None}
+            permission_cache.set(cache_key, result)
+            return result
+        
+        target_info = get_target_info(service_name)
+        
+        if not target_info['target']:
+            result = {'allowed': False, 'reason': 'TARGET_NOT_FOUND', 'target_info': None}
+            permission_cache.set(cache_key, result)
+            return result
+        
+        allowed = any((g in target_info['allowed_groups'] for g in user_groups))
+        result = {
+            'allowed': allowed,
+            'is_admin': False,
+            'reason': None if allowed else 'NOT_IN_GROUPS',
+            'target_info': target_info
+        }
+        
+        permission_cache.set(cache_key, result)
+        return result
 
     def check_access(func):
         """Decorator to check a user's access to an endpoint"""
@@ -111,39 +205,31 @@ def register_blueprint(app: Flask) -> Blueprint:
                     return Response("Unauthorized", status=401)
 
                 service_name = forwarded_host.split(".")[0]
-                package_entry = current_app.models.PackageEntry.query.filter_by(name=service_name).first()
-
-                if not package_entry:
-                    logger.warning(f"WARNING: No package entry found for {service_name}")
-                else:
-                    logger.debug(f"Found package entry")
-
-                if not package_entry and not ADMIN_GROUP in user_groups:
-                    logger.warning(f"DENY (SERVICE NOT FOUND): {username}@{remote_addr}[{forwarded_for}] "
+                if not service_name:
+                    logger.error(f"ERROR: Invalid service name.")
+                    return Response("Unauthorized", status=404)
+                
+                # Check access with caching
+                access_result = check_user_access(username, user_groups, service_name)
+                
+                if not access_result['allowed']:
+                    reason = access_result['reason']
+                    logger.info(f"DENY ({reason}): {username}@{remote_addr}[{forwarded_for}] "
                         f"-> {forwarded_method}@{forwarded_host}{forwarded_uri}")
                     return Response("Forbidden", status=403)
-                else:
-                    if package_entry:
-                        allowed_groups = package_entry.allowed_groups
-                    else:
-                        allowed_groups = [ADMIN_GROUP]
-
-                if not any((g in allowed_groups for g in user_groups)):
-                    if not ADMIN_GROUP in user_groups:
-                        logger.warning(f"DENY: {username}@{remote_addr}[{forwarded_for}] "
-                            f"-> {forwarded_method}@{forwarded_host}{forwarded_uri}")
-                        return Response("Forbidden", status=403)
-
-                if package_entry:
+                
+                # Handle autostart for packages
+                target_info = access_result.get('target_info')
+                if target_info and target_info['is_package']:
                     with current_app.app_context():
                         try:
-                            for container in package_entry.docker_services:
+                            target = target_info['target']
+                            for container in target.docker_services:
                                 current_app.logger.debug("Attempting service update")
                                 current_app.autostart_session_manager.update_access(container, current_user)
                         except Exception as e:
                             logger.error(f"Failed to update session on access: {e}")
-
-
+                
                 logger.info(f"ALLOW: {username}@{remote_addr} [{forwarded_for}] "
                     f"-> {forwarded_method} {forwarded_host}{forwarded_uri}")
 
@@ -187,11 +273,13 @@ def register_blueprint(app: Flask) -> Blueprint:
                 forwarded_for = meta["forwarded_for"]
                 forwarded_uri = meta["forwarded_uri"]
                 service_name = forwarded_host.split(".")[0]
-                package_entry = current_app.models.PackageEntry.query.filter_by(name=service_name).first()
+                
+                # Use cached lookup
+                target_info = get_target_info(service_name)
+                package_entry = target_info['target'] if target_info['is_package'] else None
                 
                 if not package_entry:
-                    # No package entry means no autostart needed
-                    logger.info(f"No package entry found for {service_name} - skipping autostart")
+                    logger.debug(f"No package entry found for {service_name} - skipping autostart")
                     return resp
                 
                 logger.debug(f"Checking autostart for service: {service_name}")
@@ -235,7 +323,7 @@ def register_blueprint(app: Flask) -> Blueprint:
                     logger.warning(f"DENY TASK ACCESS: {username} attempted to access task {task_id}")
                     return Response("Forbidden", status=403)
                 
-                logger.info(f"ALLOW TASK ACCESS: {username} accessing task {task_id}")
+                logger.debug(f"ALLOW TASK ACCESS: {username} accessing task {task_id}")
                 return func(*args, **kwargs)
                 
             except Exception as e:
@@ -249,7 +337,7 @@ def register_blueprint(app: Flask) -> Blueprint:
     @app.permission_required(app.models.PERMISSION_ENUM.EVERYBODY)
     @check_task_access
     def task_stream(task_id):
-        """Stream task progress updates"""
+        """Stream task progress updates to web terminal"""
         logger.info(f"Client connecting to task stream: {task_id}")
         
         def generate():
@@ -299,6 +387,24 @@ def register_blueprint(app: Flask) -> Blueprint:
             redirect_url=redirect,
             refresh_frequency=parse_duration(task.refresh_frequency)
         )
+    
+    @bp.route('/cache/clear', methods=['POST'])
+    @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
+    def clear_cache():
+        """Clear the permission cache (admin only)"""
+        permission_cache.clear()
+        logger.info("Permission cache cleared")
+        return jsonify({"message": "Cache cleared successfully"})
+    
+    @bp.route('/cache/stats', methods=['GET'])
+    @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
+    def cache_stats():
+        """Get cache statistics (admin only)"""
+        permission_cache.cleanup_expired()
+        return jsonify({
+            "entries": len(permission_cache.cache),
+            "ttl": permission_cache.ttl
+        })
 
     app.register_blueprint(bp)
     return bp
