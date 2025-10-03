@@ -98,6 +98,21 @@ Currently, all containers are added to the same `traefik_network` Docker network
 ![LoStack Depot](docs/images/depot.png?raw=true "LoStack Depot")
 
 
+## User / Group Management
+
+LoStack includes a simple User and Group management system backed by OpenLDAP.
+![LoStack Users](docs/images/users.png?raw=true "LoStack Users")
+![LoStack User Editor](docs/images/user.png?raw=true "LoStack User Editor")
+![LoStack Groups](docs/images/groups.png?raw=true "LoStack Groups")
+![LoStack Group](docs/images/group.png?raw=true "LoStack Group Editor")
+
+
+## Compose Launcher
+
+LoStack includes a simple launcher / stopper to handle starting and stopping containers from a compose file. Containers that are added to a compose file through the depot but not launched may be started here to add them to the main services page.
+![LoStack Launcher](docs/images/launcher.png?raw=true "LoStack Launcher")
+
+
 ## File Editor
 
 LoStack includes a basic text editor / file explorer.
@@ -105,12 +120,13 @@ It currently only has support for text-file editing, and lacks features for crea
 
 ![LoStack Files](docs/images/files.png?raw=true "LoStack Files")
 
-### Planned features
 
-#### Roadmap
+## Planned features
+
+### Roadmap
 ![LoStack Roadmap](docs/images/roadmap.png?raw=true "LoStack Roadmap")
 
-#### Coming Soon
+### Coming Soon
 
 - **Automatic Container Segregation**:
     - LoStack will automatically create Docker networks for services:
@@ -141,6 +157,7 @@ It currently only has support for text-file editing, and lacks features for crea
 
 # Technologies / Licensing:
 
+
 ### LoStack WebUI
 - **[ANSI Up](https://github.com/drudru/ansi_up)** [MIT]
 - **[Bootstrap](https://getbootstrap.com/)** [MIT]
@@ -151,17 +168,33 @@ It currently only has support for text-file editing, and lacks features for crea
 - **[JS-YAML](https://www.npmjs.com/package/js-yaml)** [MIT]
 - **[Pictogrammers Material Design Icons](https://pictogrammers.com/library/mdi/)** [[Pictogrammers Free License + MIT](https://pictogrammers.com/docs/general/license/)]
 
+
 ### LoStack Backend
 - **[Flask](https://flask.palletsprojects.com/en/stable/)** [BSD-3]
 - **[Python](https://docs.python.org/)** [[Python Software License](https://docs.python.org/3/license.html)]
 - **[Docker](https://www.docker.com/)** 
 - **[Docker Compose Plugin](https://docs.docker.com/compose/install/linux/)** [Apache 2]
 
+
 ### Integrated Containers
 - **[Authelia](https://github.com/authelia/authelia)** [Apache 2]
 - **[Traefik](https://github.com/traefik/traefik)** [MIT]
 - **[OpenLDAP](https://www.openldap.org/)** [[OpenLDAP Public License](https://www.openldap.org/software/release/license.html)]
 - **[MariaDB](https://mariadb.com/)** [[MariaDB License](https://mariadb.com/docs/general-resources/community/community/faq/licensing-questions/licensing-faq)]
+
+### AI Disclaimer
+- AI was used to do the following:
+    - Generate some LoStack-Depot package compose files from Docker run commands and abstractly formatted compose files while matching the LoStack standard (The LoStack-Depot readme was designed to be fed into an AI to make Depot package creation easier) 
+    - Generate scripts to do one-off downloads of certain packages from different CDNs to make keeping dependencies up to date easier. See the fetch_*.py scripts in ./scripts
+    - Generate scripts to do one-off changes to the depot (like adding a certain tag, etc)
+    - Find opportunites for DRY
+    - Prototype some UI elements 
+    - Generate custom entrypoints for containers
+- AI was not allowed to touch:
+    - Authentication
+    - Role Based Access Control
+    - User and Container management
+
 
 # Contributors:
  - [Ultimaterez](https://github.com/ultimaterez) (alpha tester / feedback / depot / readme)
