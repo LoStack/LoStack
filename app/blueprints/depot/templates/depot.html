@@ -188,7 +188,9 @@ Service Depot
             {# Package is fully installed and running #}
             <div class="d-flex gap-2 justify-content-between align-items-center">
               <a href="{{ url_for('services.services', q=package.name) }}" 
-                 class="btn btn-success flex-grow-1 shadow-sm-hover">
+                class="btn btn-success flex-grow-1 shadow-sm-hover"
+                title="View on Services "
+              >
                 <i class="bi bi-check-circle me-2"></i>
                 View in Services
               </a>
@@ -203,13 +205,21 @@ Service Depot
             {# Package is in compose file but not launched #}
             <div class="d-flex gap-2 justify-content-between align-items-center">
               <a href="{{ url_for('launcher.launcher', file='lostack-compose.yml', container=package.name) }}" 
-                 class="btn btn-warning flex-grow-1 shadow-sm-hover">
+                 class="btn btn-warning flex-grow-1 shadow-sm-hover"
+                 title="Show in Compose Launcher"
+              >
                 <i class="bi bi-play-circle me-2"></i>
                 Launch from Compose
               </a>
               {% set project_url = package.labels_dict.get('lostack.project_url') %}
               {% if project_url %}
-              <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
+              <a 
+                href="{{ project_url }}"
+                class="btn btn-outline-info"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open Project Page"
+              >
                 <i class="bi bi-github"></i>
               </a>
               {% endif %}
@@ -219,20 +229,30 @@ Service Depot
             <div class="d-flex gap-2 justify-content-between align-items-center">
               <button
                 onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_add', package=package.name) }}')"
-                class="btn btn-outline-primary btn-launch flex-grow-0 shadow-sm-hover">
+                class="btn btn-outline-primary btn-launch flex-grow-0 shadow-sm-hover"
+                title="Add to Compose File"
+              >
                 <i class="bi bi-plus-circle"></i>
               </button>
               
               <button
                 onclick="launchTerminalWithButtonAnimation('{{ url_for('depot.depot_launch', package=package.name) }}')"
-                class="btn btn-outline-success btn-launch flex-grow-1 shadow-sm-hover">
+                class="btn btn-outline-success btn-launch flex-grow-1 shadow-sm-hover"
+                title="Launch Service"
+              >
                 <i class="bi bi-rocket me-2"></i>
                 Launch
               </button>
 
               {% set project_url = package.labels_dict.get('lostack.project_url') %}
               {% if project_url %}
-              <a href="{{ project_url }}" class="btn btn-outline-info" target="_blank" rel="noopener noreferrer">
+              <a
+                href="{{ project_url }}"
+                class="btn btn-outline-info"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open Project Page"
+              >
                 <i class="bi bi-github"></i>
               </a>
               {% endif %}

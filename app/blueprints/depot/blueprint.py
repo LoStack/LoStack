@@ -34,22 +34,20 @@ def register_blueprint(app:Flask) -> Blueprint:
         """Show depot page"""
         all_packages = current_app.docker_handler.depot_handler.packages.keys()
         installed_packages = [s.name for s in current_app.models.PackageEntry.query.all()]
-        
-        compose_handler = current_app.docker_manager.compose_file_handlers["/docker/docker-compose.yml"]
-        lostack_handler = current_app.docker_manager.compose_file_handlers["/docker/lostack-compose.yml"]
+        handlers = current_app.docker_manager.compose_file_handlers
+        compose_handler = handlers["/docker/docker-compose.yml"]
+        lostack_handler = handlers["/docker/lostack-compose.yml"]
         compose_services = [*compose_handler.services, *lostack_handler.services]
-        
         depot_data = current_app.docker_handler.depot_handler.format_packages_for_depot_page(list(all_packages))
         
         for package_name, package in depot_data['packages'].items():
-            print(f"DEBUG - Checking package: {package_name}")
             if package_name in installed_packages:
                 package['status'] = 'installed'
             elif package_name in compose_services:
                 package['status'] = 'in_compose'
             else:
                 package['status'] = 'available'
-        
+
         return render_template(
             "depot.html",
             **depot_data,
