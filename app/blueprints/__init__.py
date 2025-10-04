@@ -1,5 +1,6 @@
 from .middleware import register_blueprint as register_middleware_blueprint
 from .file_browser import register_blueprint as register_browser_blueprint
+from .cert_manager import register_blueprint as register_cert_manager_blueprint
 from .containers import register_blueprint as register_containers_blueprint
 from .dashboard import register_blueprint as register_dashboard_blueprint
 from .depot import register_blueprint as register_depot_blueprint
@@ -12,8 +13,9 @@ from .user import register_blueprint as register_user_blueprint
 
 def register_blueprints(app):
     for callback in [
-        register_middleware_blueprint,
+        register_middleware_blueprint, # First in case other blueprints need decorator
         register_browser_blueprint,
+        register_cert_manager_blueprint,
         register_containers_blueprint,
         register_dashboard_blueprint,
         register_depot_blueprint,

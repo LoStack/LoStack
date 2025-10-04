@@ -236,7 +236,12 @@ def setup_context_provider(app: Flask) -> None:
         if hasattr(current_user, 'editor_theme'):
             selected_editor_theme = current_user.editor_theme or "default"
         
+        nav_links = current_app.config["NAV_LINKS"].copy()
+        if not current_user.is_admin:
+            nav_links.pop("admins")
+
         return {
+            "nav_links": nav_links,
             "themes": app.config.get("BOOTSWATCH_THEMES"),
             "editor_themes": app.config.get("CODEMIRROR_THEMES"),
             "selected_theme": selected_theme,

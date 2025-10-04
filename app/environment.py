@@ -225,6 +225,25 @@ MEDIA_FOLDERS = [
     "downloads/youtube/temp",
 ]
 
+NAV_LINKS = {
+  # ... : (title, endpoint,                     "compare val",   "icon")
+  "users" : {
+    ("Dashboard", "dashboard.dashboard",        "dashboard",      "house-door"),
+    ("Settings",  "settings.settings",          "settings",       "person-gear"),
+  },
+  "admins" : (
+    ("Services",  "services.services",          "services",       "rocket-takeoff"),
+    ("Routing",   "traefik_routes.routes",      "traefik_routes", "cone-striped"),
+    ("Containers","containers.containers",      "containers",     "boxes"),
+    ("Launcher",  "launcher.launcher",          "launcher",       "shift"),
+    ("Depot",     "depot.depot",                "depot",          "shop-window"),
+    ("Files",     "file_browser.file_browser",  "file_browser",   "folder2-open"),
+    ("Certificates","certs.index",              "certs",          "shield-lock"),
+    ("Config",    "settings.settings",          "settings",       "sliders"),
+    ("Users",     "ldap.users",                 "ldap",           "people"),
+  )
+}
+
 ENV_DEFAULTS = {
     "AUTHOR" : "Andrew Spangler",
     "APPLICATION_NAME" : "LoStack Admin",
@@ -289,6 +308,7 @@ ENV_DEFAULTS = {
     "LDAP_REQUIRE_STARTTLS"         : "false",
     "EMAIL_DOMAIN"                  : "lostack.internal",
     "MEDIA_FOLDERS"                 : ",".join(MEDIA_FOLDERS),
+    "NAV_LINKS"                     : NAV_LINKS
     # "ENABLE_DNS"                    : "true",
     # "HOST_IP"                       : "", # Required External
     # "DNS_IP"                        : "", # Required External

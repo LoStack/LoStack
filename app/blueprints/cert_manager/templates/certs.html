@@ -1,0 +1,225 @@
+{% extends "core.html" %}
+
+{% block head %}
+<style>
+  .cert-textarea {
+    min-height: 200px;
+  }
+
+  input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+  }
+</style>
+{% endblock %}
+
+{% block page_title %}<i class="bi bi-shield-lock-fill me-2"></i>Certificate Manager{% endblock %}
+
+{% block content %}
+<nav class="launcher-nav px-2 py-2 bg-dark mb-3 d-flex justify-content-between align-items-center">
+  <ul class="nav nav-pills">
+    <li class="nav-item">
+      <span class="nav-link active px-3 py-2 my-2 mx-2">
+        <i class="bi bi-folder-fill me-1"></i> /certs
+      </span>
+    </li>
+  </ul>
+
+  <div class="ms-auto">
+    <div class="mx-3">
+      <span class="text-light">
+        <i class="bi bi-info-circle me-1"></i>
+        Domain: <strong>{{ domain }}</strong>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<form method="POST" action="{{ url_for('certs.index') }}">
+
+  <!-- Existing Certificates -->
+  {% if certs %}
+  <div class="card mb-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Certificate Name</th>
+              <th>Key Path</th>
+              <th>Cert Path</th>
+              <th class="table-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cert_name, cert_data in certs.items() %}
+            <tr>
+              <td>
+                <div class="fw-bold text-primary">
+                  <i class="bi bi-file-earmark-lock-fill me-2"></i>{{ cert_name }}
+                </div>
+              </td>
+              <td class="text-secondary">
+                <small>{{ cert_data.key.path if cert_data.key.path else '-' }}</small>
+              </td>
+              <td class="text-secondary">
+                <small>{{ cert_data.cert.path if cert_data.cert.path else '-' }}</small>
+              </td>
+              <td class="table-actions">
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse"
+                    data-bs-target="#cert-{{ loop.index }}" title="Edit Certificate">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-danger" onclick="deleteCertificate('{{ cert_name }}')"
+                    title="Delete Certificate">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr class="collapse" id="cert-{{ loop.index }}">
+              <td colspan="4" class="p-0">
+                <div class="p-3 bg-light">
+                  <div class="row">
+                    {% if cert_data.key.path %}
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-bold">
+                        <i class="bi bi-key-fill me-1"></i> Private Key
+                      </label>
+                      <textarea class="form-control font-monospace" name="{{ cert_name }}_key_content"
+                        placeholder="Paste private key content here...">{{ cert_data.key.content }}</textarea>
+                      <small class="text-muted">{{ cert_data.key.path }}</small>
+                    </div>
+                    {% endif %}
+
+                    {% if cert_data.cert.path %}
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-bold">
+                        <i class="bi bi-file-earmark-text-fill me-1"></i> Certificate
+                      </label>
+                      <textarea class="form-control font-monospace" name="{{ cert_name }}_cert_content"
+                        placeholder="Paste certificate content here...">{{ cert_data.cert.content }}</textarea>
+                      <small class="text-muted">{{ cert_data.cert.path }}</small>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    No certificates found in /certs directory. Create your first certificate below.
+  </div>
+  {% endif %}
+
+
+  <div class="card">
+    <div class="card-header bg-dark text-light">
+      <i class="bi bi-plus-circle-fill me-2"></i>Create New Certificate
+    </div>
+
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Certificate Name</label>
+          <input type="text" class="form-control" name="new_cert_name" placeholder="e.g., example.internal"
+            id="new_cert_name">
+          <small class="text-muted">Domain name for certificate pair</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Key File Path</label>
+          <input type="text" class="form-control" name="new_key_path" placeholder="/certs/example-key.pem"
+            id="new_key_path" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Certificate File Path</label>
+          <input type="text" class="form-control" name="new_cert_path" placeholder="/certs/example.pem"
+            id="new_cert_path" readonly>
+        </div>
+      </div>
+  
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-key-fill me-1"></i> Private Key Content
+          </label>
+          <textarea class="form-control cert-textarea text-small font-monospace" name="new_key_content"
+            placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+            id="new_key_content"></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-file-earmark-text-fill me-1"></i> Certificate Content
+          </label>
+          <textarea class="form-control cert-textarea text-small font-monospace" name="new_cert_content"
+            placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+            id="new_cert_content"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <button type="reset" class="btn btn-secondary">
+      <i class="bi bi-x-circle me-1"></i> Reset
+    </button>
+    <button type="submit" class="btn btn-success">
+      <i class="bi bi-save me-1"></i> Save All Changes
+    </button>
+  </div>
+</form>
+
+<script>
+  // Delete certificate function
+  function deleteCertificate(certName) {
+    if (confirm('Delete ' + certName + ' and all associated files?')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ url_for("certs.delete", cert_name="CERT_NAME") }}'.replace('CERT_NAME', certName);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Auto-populate file paths based on certificate name
+  document.getElementById('new_cert_name')?.addEventListener('input', function (e) {
+    const name = e.target.value.trim();
+    const keyPath = document.getElementById('new_key_path');
+    const certPath = document.getElementById('new_cert_path');
+
+    if (name) {
+      if (keyPath) {
+        keyPath.value = `/certs/${name}-key.pem`;
+      }
+      if (certPath) {
+        certPath.value = `/certs/${name}.pem`;
+      }
+    } else {
+      if (keyPath) keyPath.value = '';
+      if (certPath) certPath.value = '';
+    }
+  });
+
+  // Validate paths are within /certs
+  document.querySelector('form')?.addEventListener('submit', function (e) {
+    const keyPath = document.getElementById('new_key_path')?.value;
+    const certPath = document.getElementById('new_cert_path')?.value;
+
+    if ((keyPath && !keyPath.startsWith('/certs/')) ||
+      (certPath && !certPath.startsWith('/certs/'))) {
+      e.preventDefault();
+      alert('All certificate paths must be within /certs directory');
+    }
+  });
+</script>
+
+{% endblock %}

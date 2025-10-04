@@ -174,3 +174,14 @@ padding: 0.375em 0.75em;
 .badge i {
 opacity: 0.8;
 }
+
+.modal-log {
+    background: var(--bs-dark);
+    color: var(--bs-light);
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre;
+    font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+}
