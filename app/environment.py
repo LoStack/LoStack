@@ -82,8 +82,6 @@ tls:
         keyFile: '/certs/_wildcard.{{ env "DOMAINNAME" }}-key.pem'
 
 http:
-  # Not yet uses, allows services to bypass tls check
-  # Useful for servers with self-signed certs
   serversTransports:
     insecureTransport: 
       insecureSkipVerify: true

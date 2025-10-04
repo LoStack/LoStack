@@ -69,6 +69,9 @@ def _init_db(app):
                 }
             }
 
+            if route.use_insecure_transport:
+                config["http"]["services"][route_name]["loadBalancer"]["serversTransport"] = "insecureTransport"
+
             if not (rule := route.custom_rule):
                 rule =  f"Host(`{route_name}.{defaults.domain}`)"
 
