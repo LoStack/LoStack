@@ -1,18 +1,5 @@
 {% extends "core.html" %}
 
-{% block head %}
-<style>
-  .cert-textarea {
-    min-height: 200px;
-  }
-
-  input[readonly] {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-  }
-</style>
-{% endblock %}
-
 {% block page_title %}<i class="bi bi-shield-lock-fill me-2"></i>Certificate Manager{% endblock %}
 
 {% block content %}
@@ -36,9 +23,6 @@
 </nav>
 
 <form method="POST" action="{{ url_for('certs.index') }}">
-
-  <!-- Existing Certificates -->
-  {% if certs %}
   <div class="card mb-3">
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -113,13 +97,6 @@
       </div>
     </div>
   </div>
-  {% else %}
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>
-    No certificates found in /certs directory. Create your first certificate below.
-  </div>
-  {% endif %}
-
 
   <div class="card">
     <div class="card-header bg-dark text-light">
@@ -151,7 +128,10 @@
           <label class="form-label">
             <i class="bi bi-key-fill me-1"></i> Private Key Content
           </label>
-          <textarea class="form-control cert-textarea text-small font-monospace" name="new_key_content"
+          <textarea
+            class="form-control cert-textarea text-small font-monospace"
+            name="new_key_content"
+            style="min-height: 200px;"
             placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
             id="new_key_content"></textarea>
         </div>
@@ -159,7 +139,10 @@
           <label class="form-label">
             <i class="bi bi-file-earmark-text-fill me-1"></i> Certificate Content
           </label>
-          <textarea class="form-control cert-textarea text-small font-monospace" name="new_cert_content"
+          <textarea
+            class="form-control cert-textarea text-small font-monospace"
+            name="new_cert_content"
+            style="min-height: 200px;"
             placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
             id="new_cert_content"></textarea>
         </div>
