@@ -1,4 +1,4 @@
-# LoStack - Easy Docker Service Management
+# LoStack - Easy Docker and Proxy Manager
 
 A *"One Container to Rule Them All"* approach to create a multi-user Docker ecosystem in minutes.
 
