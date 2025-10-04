@@ -2,7 +2,7 @@
 
 A *"One Container to Rule Them All"* approach to create a multi-user Docker ecosystem in minutes.
 
-LoStack serves as a simple way to automate and standardize service installation, and provide a friendly way to handle user management, group-based access control, service discovery, routing, log inspection, Docker container actions, and more.
+LoStack serves as a simple way to automate and standardize service installation, and provide a friendly way to handle user management, proxy routing, access control, and more.
 
 ![LoStack Architecture](docs/images/architecture.png?raw=true "LoStack Architecture")
 
@@ -10,11 +10,11 @@ LoStack serves as a simple way to automate and standardize service installation,
 Host OS (Ubuntu, Raspbian recommended)
 ├── Docker + Compose
 └── Service Stack
-    ├── Traefik (Reverse Proxy, routing, and middleware)
+    ├── Traefik (Reverse proxy, routing, and middleware)
     ├── Authelia (Universal authentication and SSO)
     ├── OpenLDAP (Users and groups backend)
     ├── MariaDB (Database services for Authelia and LoStack)
-    ├── LoStack (Container Management and configuration)
+    ├── LoStack (Container and proxy management and configuration)
     └── CoreDNS (DNS Resolution) [Optional]
 ```
 
