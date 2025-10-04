@@ -100,7 +100,7 @@ class LDAPManager:
                 self.logger.info(f"LDAP connection failed, attempt {attempt+1}")
                 attempt += 1
             time.sleep(3)
-        self.logger("Failed to connect to LDAP server!")
+        self.logger.warning("Failed to connect to LDAP server!")
         raise ldap.SERVER_DOWN("Failed to connect to LDAP server!")
 
     def __enter__(self):
