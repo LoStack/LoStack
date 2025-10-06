@@ -227,11 +227,11 @@ MEDIA_FOLDERS = [
 
 NAV_LINKS = {
   # ... : (title, endpoint,                     "compare val",   "icon")
-  "users" : {
+  "users" : [
     ("Dashboard", "dashboard.dashboard",        "dashboard",      "house-door"),
-    ("Settings",  "settings.settings",          "settings",       "person-gear"),
-  },
-  "admins" : (
+    ("Settings",  "user_settings.user_settings","user_settings",  "person-gear"),
+  ],
+  "admins" : [
     ("Services",  "services.services",          "services",       "rocket-takeoff"),
     ("Routing",   "traefik_routes.routes",      "traefik_routes", "cone-striped"),
     ("Containers","containers.containers",      "containers",     "boxes"),
@@ -241,7 +241,7 @@ NAV_LINKS = {
     ("Certificates","certs.index",              "certs",          "shield-lock"),
     ("Config",    "settings.settings",          "settings",       "sliders"),
     ("Users",     "ldap.users",                 "ldap",           "people"),
-  )
+  ]
 }
 
 ENV_DEFAULTS = {

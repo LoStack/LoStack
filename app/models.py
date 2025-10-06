@@ -28,8 +28,7 @@ def _init_db(app):
 
     class PERMISSION_ENUM:
         _NAMES = {
-            (EVERYBODY := 1) : app.config["USER_GROUP"],
-            (USER := 5)     : "users",
+            (EVERYBODY := 5) : app.config["USER_GROUP"],
             (ADMIN := 10)   : app.config["ADMIN_GROUP"],
             (OWNER := 15)   : "owners",
             (NOACCESS := 99): "NOACCESS"
@@ -42,7 +41,7 @@ def _init_db(app):
         __bind_key__ = "lostack-db"
         id = db.Column(db.Integer, primary_key=True)
         # Permission integer, calculated from user groups
-        permission_integer = db.Column(db.Integer, default=PERMISSION_ENUM.USER)
+        permission_integer = db.Column(db.Integer, default=PERMISSION_ENUM.EVERYBODY)
         # User primary name
         name = db.Column(db.String(100), unique=True, nullable=False)
         # Date user was added to LoStack db

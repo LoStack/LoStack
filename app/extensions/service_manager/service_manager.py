@@ -88,7 +88,7 @@ class ServiceManager:
         defaults = current_app.models.LoStackDefaults.get_defaults()
         labels = group_data['labels']
         lb_get = labels.get 
-        def get_bool(key, default="true"): return parse_bool(labels.get(key, default))
+        def get_bool(key, default=True): return parse_bool(labels.get(key, default))
         service = current_app.models.PackageEntry(
             name                         = group_name,
             core_service                 = core_service,
@@ -102,19 +102,18 @@ class ServiceManager:
             lostack_access_enabled       = get_bool('lostack.access_control'),
             lostack_autostart_enabled    = get_bool('lostack.autostart'),
             lostack_autoupdate_enabled   = get_bool('lostack.autoupdate'),
-            automatic                    = get_bool('lostack.automatic', "false"),
-            mount_to_root                = get_bool('lostack.root', 'false'),
+            automatic                    = get_bool('lostack.automatic', False),
+            mount_to_root                = get_bool('lostack.root', False),
             homepage_icon                = lb_get(  'homepage.icon', "mdi-application"),
             homepage_name                = lb_get(  'homepage.name', group_name),
             homepage_description         = lb_get(  'homepage.description', ""),
             homepage_url                 = lb_get(  'homepage.href', "https://"+group_name+"."+current_app.config.get("DOMAIN_NAME")),
             homepage_group               = lb_get(  'homepage.group', "Apps"),
-            force_disable_autostart      = get_bool('lostack.force_disable_autostart','false'),
-            force_disable_access_control = get_bool('lostack.force_disable_access_control','false'),
-            force_disable_autoupdate     = get_bool('lostack.force_disable_autoupdate','false'),
-            force_compose_edit           = get_bool('lostack.force_compose_edit','false'),
+            force_disable_autostart      = get_bool('lostack.force_disable_autostart',False),
+            force_disable_access_control = get_bool('lostack.force_disable_access_control',False),
+            force_disable_autoupdate     = get_bool('lostack.force_disable_autoupdate',False),
+            force_compose_edit           = get_bool('lostack.force_compose_edit',False),
         )
-        
         current_app.db.session.add(service)
         self.logger.info(f"Created new service: {group_name}")
         return service

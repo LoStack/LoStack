@@ -32,7 +32,7 @@ def register_blueprint(app: Flask) -> Blueprint:
     )
 
     @bp.route("/user_settings", methods=["GET", "POST"])
-    @app.permission_required(app.models.PERMISSION_ENUM.USER)
+    @app.permission_required(app.models.PERMISSION_ENUM.EVERYBODY)
     def user_settings():
         """Edit user settings"""
         form = UserSettingsForm()
