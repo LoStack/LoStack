@@ -32,7 +32,7 @@ session:
     authelia_url: 'https://{{ env "CUST_AUTHELIA_PREFIX" }}.{{ env "DOMAINNAME" }}/'
     expiration: '{{ env "CUST_AUTHELIA_EXPIRATION" }}'
     inactivity: '{{ env "CUST_AUTHELIA_INACTIVITY" }}'
-    default_redirection_url: 'https://{{ env "DOMAINNAME" }}/'
+    default_redirection_url: 'https://lostack.{{ env "DOMAINNAME" }}/'
 storage:
   encryption_key: |
     {{- fileContent "/lostack_secrets/storage_encryption_key" | nindent 4 }}
