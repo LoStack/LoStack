@@ -61,7 +61,7 @@ function renderContainers(containers) {
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                 <h6 class="fw-semibold mb-0">${names}</h6>
-                <div class="mt-1">${statusBadge}</div>
+                <div class="mt-0">${statusBadge}</div>
                 </div>
                 <span class="service-icon ms-2" data-icon="${iconName}"></span>
             </div>

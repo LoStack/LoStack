@@ -63,11 +63,24 @@
       <i class="bi bi-stoplights-fill me-1 text-secondary"></i>Access Control
     </h6>
     <div class="small d-flex gap-2 flex-wrap">
-      <span class="badge rounded-pill bg-{{ 'success' if route.lostack_access_enabled else 'secondary' }}">
-        <i class="bi bi-{{ 'shield-check' if route.lostack_access_enabled else 'shield-x' }} me-1"></i>
-        {{ 'Enabled' if route.lostack_access_enabled else 'Disabled' }}
-      </span>
+      <button class="btn btn-sm btn-outline-{{ 'success' if route.lostack_access_enabled else 'secondary' }} btn-action py-0 px-2"
+        onclick="toggleRouteAccessControl({{ route.id }})"
+        title="{{ 'Disable' if route.lostack_access_enabled else 'Enable' }} Access control"
+        style="min-width: 60px;">
+        <i class="bi bi-{{ 'toggle-on' if route.lostack_access_enabled else 'toggle-off' }} me-1"></i>
+        {{ 'On' if route.lostack_access_enabled else 'Off' }}
+      </button>
     </div>
+  </div>
+  <div class="small mb-0">
+    {% for group in route.allowed_groups %}
+    <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
+      <i class="bi bi-people me-2 text-secondary"></i>
+      <code class="small item-break">
+        {{ group }}
+      </code>
+    </div>
+    {% endfor %}
   </div>
 </div>
 {% endmacro %}
@@ -79,7 +92,7 @@
       <i class="bi bi-shield-lock-fill me-1 text-secondary"></i>Transport
     </h6>
   </div>
-  <div class="small ms-2 me-0 mb-0">
+  <div class="small ms-0 me-0 mb-0">
     <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
       <i class="bi bi-{{ 'lock-fill' if route.use_https else 'unlock-fill' }} me-2 text-secondary"></i>
       <code class="text-primary item-break">Protocol:</code>&nbsp;
@@ -101,7 +114,7 @@
       <i class="bi bi-house-fill me-1 text-secondary"></i>Homepage
     </h6>
   </div>
-  <div class="small ms-2 me-0 mb-0">
+  <div class="small ms-0 me-0 mb-0">
     <div class="ms-2 me-0 general-item d-flex generic-item flex-wrap align-items-baseline mb-1">
       <i class="bi bi-tag me-2 text-secondary"></i>
       <code class="text-primary item-break">Name:</code>&nbsp;
@@ -140,7 +153,7 @@
             {{ route.name }}
           </h6>
 
-          <div class="route-status mt-1">
+          <div class="route-status mt-0">
             <span class="badge rounded-pill bg-{{ 'success' if route.enabled else 'secondary' }} py-1 px-2">
               <i class="bi bi-{{ 'check-circle' if route.enabled else 'x-circle' }} me-1"></i>
               {{ 'Active' if route.enabled else 'Disabled' }}
@@ -293,6 +306,27 @@ function toggleRoute(routeId) {
   .catch(error => {
     console.error('Error:', error);
     alert('Error toggling route');
+  });
+}
+
+function toggleRouteAccessControl(routeId) {
+  fetch(`/routes/action/${routeId}/toggle_access`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error toggling access control: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error toggling access control');
   });
 }
 

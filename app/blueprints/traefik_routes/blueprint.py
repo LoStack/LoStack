@@ -78,6 +78,10 @@ def register_blueprint(app:Flask) -> Blueprint:
                 route.homepage_description = form.homepage_description.data
                 route.lostack_access_enabled = form.lostack_access_enabled.data
                 route.middlewares = form.middlewares.data
+                if form.access_groups.data:
+                    route.access_groups = ",".join(form.access_groups.data)
+                else:
+                    route.access_groups = ""
 
                 current_app.db.session.add(route)
                 current_app.db.session.commit()
@@ -126,6 +130,10 @@ def register_blueprint(app:Flask) -> Blueprint:
             route.homepage_description = form.homepage_description.data
             route.lostack_access_enabled = form.lostack_access_enabled.data
             route.middlewares = form.middlewares.data
+            if form.access_groups.data:
+                route.access_groups = ",".join(form.access_groups.data)
+            else:
+                route.access_groups = ""
 
             try:
                 current_app.db.session.commit()
@@ -183,6 +191,31 @@ def register_blueprint(app:Flask) -> Blueprint:
                 "enabled": route.enabled,
                 "config_updated": config_updated,
                 "message": f"Route {'enabled' if route.enabled else 'disabled'} successfully"
+            })
+        except Exception as e:
+            current_app.db.session.rollback()
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    @bp.route("/action/<int:route_id>/toggle_access", methods=["POST"])
+    @app.permission_required(app.models.PERMISSION_ENUM.ADMIN)
+    def route_toggle_access_control(route_id):
+        """AJAX endpoint to toggle route access control"""
+        route = current_app.models.Route.query.get_or_404(route_id)
+        
+        try:
+            route.lostack_access_enabled = not route.lostack_access_enabled
+            current_app.db.session.commit()
+            
+            config_updated = current_app.models.save_traefik_config()
+            
+            return jsonify({
+                "success": True,
+                "enabled": route.enabled,
+                "config_updated": config_updated,
+                "message": f"LoStack group check {'enabled' if route.enabled else 'disabled'} successfully"
             })
         except Exception as e:
             current_app.db.session.rollback()

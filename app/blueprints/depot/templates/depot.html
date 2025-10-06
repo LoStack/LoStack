@@ -97,7 +97,7 @@ Service Depot
         data-title="{{ package.search_data.title }}" data-description="{{ package.search_data.description }}"
         data-group="{{ package.group or '' }}" data-tags="{{ package.search_data.tags }}">
         <div class="card shadow depot-card service-card h-100 {% if package.status != 'available' %}opacity-75{% endif %}">
-          <div class="card-header {% if package.status == 'available' %}bg-primary{% else %}bg-secondary{% endif %} text-light">
+          <div class="card-header {% if package.status == 'available' %}bg-primary text-light{% else %}bg-secondary text-info{% endif %}">
             <div class="d-flex align-items-start justify-content-between">
               <div class="flex-grow-1">
                 <h6 class="mb-0 fw-bold d-inline">{{ package.title }}</h6>
