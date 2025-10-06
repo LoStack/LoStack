@@ -16,6 +16,7 @@ from app.permissions import get_proxy_user_meta
 
 
 def check_user_access(user_groups:list[str], package_groups:list[str]):
+    print(user_groups, package_groups)
     for g in user_groups:
         if g in package_groups:
             return True

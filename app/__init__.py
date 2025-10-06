@@ -10,6 +10,7 @@ from flask import (
     Flask,
     Blueprint,
     current_app,
+    request,
     __version__ as flask_version
 )
 from flask_login import LoginManager, current_user
@@ -22,7 +23,7 @@ from app.extensions.service_manager import init_service_manager
 from app.extensions.certificate_generator import check_certificates_exist, generate_certificates
 from app.extensions.common.label_extractor import LabelExtractor as labext
 from app.models import init_db
-from app.permissions import setup_permissions
+from app.permissions import setup_permissions, get_proxy_user_meta
 
 def _require_config(app, var_name):
     if (value := app.config.get(var_name)) is None:
@@ -59,6 +60,10 @@ def setup_app_config(app: Flask) -> None:
     app.config["TRUSTED_PROXY_IPS"] = [i.strip() for i in trusted_proxies_string.split(",")]
     if app.config.get("DEPOT_DEV_MODE"):
         app.config["DEPOT_DIR"] = app.config.get("DEPOT_DIR_DEV")
+
+    # Configure NAV_LINKS with adjusted groups  
+    app.config["NAV_LINKS"][app.config["USER_GROUP"]] = app.config["NAV_LINKS"].pop("users")
+    app.config["NAV_LINKS"][app.config["ADMIN_GROUP"]] = app.config["NAV_LINKS"].pop("admins")
 
 def setup_logging(app: Flask) -> None:
     logging.basicConfig(
@@ -236,12 +241,15 @@ def setup_context_provider(app: Flask) -> None:
         if hasattr(current_user, 'editor_theme'):
             selected_editor_theme = current_user.editor_theme or "default"
         
-        nav_links = current_app.config["NAV_LINKS"].copy()
-        if not current_user.is_admin:
-            nav_links.pop("admins")
+        nav_links = current_app.config["NAV_LINKS"]
+        allowed_links = {}
+        user_groups = get_proxy_user_meta(request,{"groups": app.config["GROUPS_HEADER"]})["groups"]
+        for group, config in nav_links.items():
+            if group in user_groups:
+                allowed_links[group] = config
 
         return {
-            "nav_links": nav_links,
+            "nav_links": allowed_links,
             "themes": app.config.get("BOOTSWATCH_THEMES"),
             "editor_themes": app.config.get("CODEMIRROR_THEMES"),
             "selected_theme": selected_theme,

@@ -28,9 +28,9 @@ def _init_db(app):
 
     class PERMISSION_ENUM:
         _NAMES = {
-            (EVERYBODY := 1) : "everybody",
+            (EVERYBODY := 1) : app.config["USER_GROUP"],
             (USER := 5)     : "users",
-            (ADMIN := 10)   : app.config.get("ADMIN_GROUP"),
+            (ADMIN := 10)   : app.config["ADMIN_GROUP"],
             (OWNER := 15)   : "owners",
             (NOACCESS := 99): "NOACCESS"
         } 
@@ -54,10 +54,6 @@ def _init_db(app):
         # custom css
         custom_css = db.Column(db.Text, nullable=False, default="")
         
-        @property
-        def is_admin(self) -> bool:
-            return self.permission_integer >= PERMISSION_ENUM.ADMIN
-
 
     class SecretKey(db.Model):
         """Table to store Flask and FlaskWTF secret keys"""

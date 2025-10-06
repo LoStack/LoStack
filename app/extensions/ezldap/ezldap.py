@@ -71,9 +71,9 @@ class LDAPManager:
         self.tls_verify_client  = conf("LDAP_TLS_VERIFY_CLIENT", "never")
         self.ignore_cert_errors = conf("LDAP_IGNORE_CERT_ERRORS", "true").lower() == "true"
         self.require_starttls   = conf("LDAP_REQUIRE_STARTTLS", "false").lower() == "true"
-            
-        # Application-specific settings
         self.admins_group       = conf("ADMIN_GROUP", "admins")
+        self.users_group        = conf("USER_GROUP", "everybody")
+
         self.email_domain       = conf("EMAIL_DOMAIN", f"mail.{self.ldap_domain}")
 
         self.connection = None
@@ -109,7 +109,7 @@ class LDAPManager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        pass # don't disconnect, disconnect handled automatically by atexit
 
     def _dn_user(self, username):
         return f"uid={username},{self.people_dn}"
@@ -371,7 +371,7 @@ class LDAPManager:
         for dn, attrs, label in organizational_units:
             self._safe_add(dn, attrs, label)
 
-        self.create_admin_user_and_group(additional_groups=additional_groups)
+        self.create_admin_user_and_group(additional_groups=[self.users_group, additional_groups])
 
         return True
 

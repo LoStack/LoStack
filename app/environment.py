@@ -285,6 +285,7 @@ ENV_DEFAULTS = {
     "TIMEZONE"                      : "US/Pacific",
     "LOG_CONFIG"                    : LOG_CONFIG,
     "ADMIN_GROUP"                   : "admins",
+    "USER_GROUP"                    : "everybody",
     "GROUPS_HEADER"                 : "Remote-Groups",
     "USERNAME_HEADER"               : "Remote-User",
     "NAME_HEADER"                   : "Remote-Name",
