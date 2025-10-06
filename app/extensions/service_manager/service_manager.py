@@ -87,50 +87,32 @@ class ServiceManager:
         """Create a new PackageEntry from container labels"""
         defaults = current_app.models.LoStackDefaults.get_defaults()
         labels = group_data['labels']
-
-        port = labels.get('lostack.port', None)
-        display_name = labext.get_friendly_name(labels, group_name)
-        session_duration = labels.get('lostack.default_duration', defaults.session_duration)
-        refresh_frequency = labels.get('lostack.refresh_frequency', defaults.refresh_frequency)
-        show_details = parse_bool(labels.get('lostack.show_details', defaults.refresh_frequency))
-        mount_to_root = parse_bool(labels.get('lostack.root', 'false'))
-        enabled = parse_bool(labels.get('lostack.enable', 'true'))
-        access_enabled = parse_bool(labels.get('lostack.access_control', 'true'))
-        autostart_enabled = parse_bool(labels.get('lostack.autostart', 'true'))
-        autoupdate_enabled = parse_bool(labels.get('lostack.autoupdate', 'true'))
-        homepage_icon = labels.get('homepage.icon', "mdi-application")
-        homepage_name = labels.get('homepage.name', group_name)
-        homepage_group = labels.get('homepage.group', "Apps")
-        homepage_description = labels.get('homepage.description', "")
-        homepage_url = labels.get('homepage.href', "https://"+group_name+"."+current_app.config.get("DOMAIN_NAME"))
-        force_disable_autostart = parse_bool(labels.get('lostack.force_disable_autostart','false'))
-        force_disable_access_control = parse_bool(labels.get('lostack.force_disable_access_control','false'))
-        force_disable_autoupdate = parse_bool(labels.get('lostack.force_disable_autoupdate','false'))
-        force_compose_edit = parse_bool(labels.get('lostack.force_compose_edit','false'))
-
+        lb_get = labels.get 
+        def get_bool(key, default="true"): return parse_bool(labels.get(key, default))
         service = current_app.models.PackageEntry(
-            name=group_name,
-            service_names=','.join(group_data['service_names']),
-            display_name=display_name,
-            port=port,
-            session_duration=session_duration,
-            refresh_frequency=refresh_frequency,
-            show_details=show_details,
-            enabled=enabled,
-            lostack_access_enabled=access_enabled,
-            lostack_autostart_enabled=autostart_enabled,
-            lostack_autoupdate_enabled=autoupdate_enabled,
-            automatic=True,
-            core_service=core_service,
-            mount_to_root=mount_to_root,
-            homepage_icon=homepage_icon,
-            homepage_name=homepage_name,
-            homepage_description=homepage_description,
-            homepage_url=homepage_url,
-            force_disable_autostart = force_disable_autostart,
-            force_disable_access_control = force_disable_access_control,
-            force_disable_autoupdate = force_disable_autoupdate,
-            force_compose_edit = force_compose_edit,
+            name                         = group_name,
+            core_service                 = core_service,
+            service_names                = ','.join(group_data['service_names']),
+            display_name                 = labext.get_friendly_name(labels, group_name),
+            port                         = lb_get(  'lostack.port', None),
+            session_duration             = lb_get(  'lostack.default_duration', defaults.session_duration),
+            refresh_frequency            = lb_get(  'lostack.refresh_frequency', defaults.refresh_frequency),
+            show_details                 = get_bool('lostack.show_details', defaults.show_details),
+            enabled                      = get_bool('lostack.enable'),
+            lostack_access_enabled       = get_bool('lostack.access_control'),
+            lostack_autostart_enabled    = get_bool('lostack.autostart'),
+            lostack_autoupdate_enabled   = get_bool('lostack.autoupdate'),
+            automatic                    = get_bool('lostack.automatic', "false"),
+            mount_to_root                = get_bool('lostack.root', 'false'),
+            homepage_icon                = lb_get(  'homepage.icon', "mdi-application"),
+            homepage_name                = lb_get(  'homepage.name', group_name),
+            homepage_description         = lb_get(  'homepage.description', ""),
+            homepage_url                 = lb_get(  'homepage.href', "https://"+group_name+"."+current_app.config.get("DOMAIN_NAME")),
+            homepage_group               = lb_get(  'homepage.group', "Apps"),
+            force_disable_autostart      = get_bool('lostack.force_disable_autostart','false'),
+            force_disable_access_control = get_bool('lostack.force_disable_access_control','false'),
+            force_disable_autoupdate     = get_bool('lostack.force_disable_autoupdate','false'),
+            force_compose_edit           = get_bool('lostack.force_compose_edit','false'),
         )
         
         current_app.db.session.add(service)
