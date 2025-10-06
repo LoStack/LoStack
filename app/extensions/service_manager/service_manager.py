@@ -8,6 +8,8 @@ from app.extensions.common.label_extractor import LabelExtractor as labext
 from app.extensions.depot_manager import DepotManager
 from app.extensions.docker.compose_file_manager import ComposeFileManager
 
+parse_bool = labext.parse_boolean
+
 class ServiceManager:
     """
     Service and Package Manager
@@ -85,35 +87,35 @@ class ServiceManager:
         """Create a new PackageEntry from container labels"""
         defaults = current_app.models.LoStackDefaults.get_defaults()
         labels = group_data['labels']
-        
+
         port = labels.get('lostack.port', None)
         display_name = labext.get_friendly_name(labels, group_name)
-        session_duration = labels.get('lostack.default_duration', None)
-        refresh_frequency = labels.get('lostack.refresh_frequency', None)
-        show_details = labext.parse_boolean(labels.get('lostack.show_details', 'true'))
-        mount_to_root = labext.parse_boolean(labels.get('lostack.root', 'false'))
-        enabled = labext.parse_boolean(labels.get('lostack.enable', 'true'))
-        access_enabled = labext.parse_boolean(labels.get('lostack.access_control', 'true'))
-        autostart_enabled = labext.parse_boolean(labels.get('lostack.autostart', 'true'))
-        autoupdate_enabled = labext.parse_boolean(labels.get('lostack.autoupdate', 'true'))
-        homepage_icon = labels.get('homepage.icon', None)
-        homepage_name = labels.get('homepage.name', None)
-        homepage_group = labels.get('homepage.group', None)
-        homepage_description = labels.get('homepage.description', None)
+        session_duration = labels.get('lostack.default_duration', defaults.session_duration)
+        refresh_frequency = labels.get('lostack.refresh_frequency', defaults.refresh_frequency)
+        show_details = parse_bool(labels.get('lostack.show_details', defaults.refresh_frequency))
+        mount_to_root = parse_bool(labels.get('lostack.root', 'false'))
+        enabled = parse_bool(labels.get('lostack.enable', 'true'))
+        access_enabled = parse_bool(labels.get('lostack.access_control', 'true'))
+        autostart_enabled = parse_bool(labels.get('lostack.autostart', 'true'))
+        autoupdate_enabled = parse_bool(labels.get('lostack.autoupdate', 'true'))
+        homepage_icon = labels.get('homepage.icon', "mdi-application")
+        homepage_name = labels.get('homepage.name', group_name)
+        homepage_group = labels.get('homepage.group', "Apps")
+        homepage_description = labels.get('homepage.description', "")
         homepage_url = labels.get('homepage.href', "https://"+group_name+"."+current_app.config.get("DOMAIN_NAME"))
-        force_disable_autostart = labext.parse_boolean(labels.get('lostack.force_disable_autostart','false'))
-        force_disable_access_control = labext.parse_boolean(labels.get('lostack.force_disable_access_control','false'))
-        force_disable_autoupdate = labext.parse_boolean(labels.get('lostack.force_disable_autoupdate','false'))
-        force_compose_edit = labext.parse_boolean(labels.get('lostack.force_compose_edit','false'))
+        force_disable_autostart = parse_bool(labels.get('lostack.force_disable_autostart','false'))
+        force_disable_access_control = parse_bool(labels.get('lostack.force_disable_access_control','false'))
+        force_disable_autoupdate = parse_bool(labels.get('lostack.force_disable_autoupdate','false'))
+        force_compose_edit = parse_bool(labels.get('lostack.force_compose_edit','false'))
 
         service = current_app.models.PackageEntry(
             name=group_name,
             service_names=','.join(group_data['service_names']),
             display_name=display_name,
             port=port,
-            session_duration=session_duration or defaults.session_duration,
-            refresh_frequency=refresh_frequency or defaults.refresh_frequency,
-            show_details=show_details or defaults.show_details,
+            session_duration=session_duration,
+            refresh_frequency=refresh_frequency,
+            show_details=show_details,
             enabled=enabled,
             lostack_access_enabled=access_enabled,
             lostack_autostart_enabled=autostart_enabled,
@@ -121,9 +123,8 @@ class ServiceManager:
             automatic=True,
             core_service=core_service,
             mount_to_root=mount_to_root,
-            homepage_icon=homepage_icon or "",
-            homepage_name=homepage_name or group_name,
-            homepage_group=homepage_group or "Apps",
+            homepage_icon=homepage_icon,
+            homepage_name=homepage_name,
             homepage_description=homepage_description,
             homepage_url=homepage_url,
             force_disable_autostart = force_disable_autostart,
@@ -145,7 +146,7 @@ class ServiceManager:
             groups = {}
             for container in containers:
                 labels = labext.normalize_labels(container.labels or {})
-                if not labext.parse_boolean(labels.get('lostack.enable', "false")):
+                if not parse_bool(labels.get('lostack.enable', "false")):
                     continue
 
                 group = labels.get('lostack.group')
@@ -164,7 +165,7 @@ class ServiceManager:
                 groups[group]['service_names'].append(container.name)
                 
                 # Check if this is the primary container
-                if labext.parse_boolean(labels.get('lostack.primary', "false")):
+                if parse_bool(labels.get('lostack.primary', "false")):
                     groups[group]['main_container'] = container
 
             # After collecting all containers, set labels with primary taking precedence
@@ -195,7 +196,7 @@ class ServiceManager:
                 if not isinstance(service, dict):
                     continue
                 labels = labext.normalize_labels(service.get('labels', []))
-                primary = labext.parse_boolean(labext.get_label("lostack.primary"))
+                primary = parse_bool(labext.get_label("lostack.primary"))
                 if primary:
                     packages.append(name)
         return packages
