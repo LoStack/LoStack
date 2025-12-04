@@ -3,7 +3,7 @@ FROM python:3.10-alpine AS builder
 
 WORKDIR /lostack
 
-RUN apk update && apk add --no-cache \
+RUN apk update && apk add --no-cache --no-scripts \
     git \
     gcc \
     musl-dev \
